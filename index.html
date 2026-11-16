@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Asentamiento</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<canvas id="lienzo"></canvas>
+
+<div id="barra">
+  <span class="rec"><i class="ic din"></i><b id="r-din">0</b><em>Dinero</em></span>
+  <span class="rec"><i class="ic cha"></i><b id="r-cha">0</b><em>Chatarra</em></span>
+  <span class="rec"><i class="ic pob"></i><b id="r-pob">0/0</b><em>Población</em></span>
+  <span class="hueco"></span>
+  <span id="reloj">0:00</span>
+  <button id="b-son" type="button">Sonido: sí</button>
+</div>
+
+<div id="avisos"></div>
+
+<div id="panel">
+  <canvas id="minimapa" width="220" height="116"></canvas>
+  <div id="info"></div>
+  <div id="ordenes"></div>
+</div>
+
+<div id="inicio" class="capa">
+  <div class="cartel">
+    <h1>Asentamiento</h1>
+    <p class="lema">Un descampado, cuatro cartones y un Ayuntamiento con muchas ganas de multar.</p>
+    <div class="dif" id="dif">
+      <button type="button" data-d="facil">Fácil</button>
+      <button type="button" data-d="normal" class="act">Normal</button>
+      <button type="button" data-d="dificil">Difícil</button>
+    </div>
+    <button type="button" id="b-jugar">Jugar</button>
+    <ul class="ayuda">
+      <li><b>Clic izquierdo</b>: seleccionar. Arrastra para un recuadro.</li>
+      <li><b>Clic derecho</b>: mover, atacar, recoger chatarra o ir a la plaza.</li>
+      <li><b>Flechas</b> o bordes de la pantalla: mover la cámara. <b>Espacio</b>: volver a casa.</li>
+      <li>Derriba el Ayuntamiento antes de que desaloje tu chabola principal.</li>
+    </ul>
+    <p class="ver">Versión 0.1</p>
+  </div>
+</div>
+
+<div id="fin" class="capa oculto">
+  <div class="cartel">
+    <h1 id="fin-titulo"></h1>
+    <p class="lema" id="fin-texto"></p>
+    <button type="button" id="b-otra">Otra partida</button>
+  </div>
+</div>
+
+<script src="js/dibujo.js"></script>
+<script src="js/juego.js"></script>
+</body>
+</html>
