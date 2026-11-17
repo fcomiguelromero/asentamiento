@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Asentamiento</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Federo&display=swap">
 <link rel="stylesheet" href="estilo.css">
 </head>
 <body>
@@ -22,14 +23,16 @@
 
 <div id="panel">
   <canvas id="minimapa" width="220" height="116"></canvas>
+  <canvas id="retrato" width="192" height="192"></canvas>
   <div id="info"></div>
   <div id="ordenes"></div>
 </div>
 
 <div id="inicio" class="capa">
   <div class="cartel">
+    <canvas id="arte" width="1120" height="600"></canvas>
     <h1>Asentamiento</h1>
-    <p class="lema">Un descampado, cuatro cartones y un Ayuntamiento con muchas ganas de multar.</p>
+    <p class="lema">Un descampado, cuatro cartones y un Ayuntamiento con muchas ganas de multar</p>
     <div class="dif" id="dif">
       <button type="button" data-d="facil">Fácil</button>
       <button type="button" data-d="normal" class="act">Normal</button>
@@ -38,11 +41,12 @@
     <button type="button" id="b-jugar">Jugar</button>
     <ul class="ayuda">
       <li><b>Clic izquierdo</b>: seleccionar. Arrastra para un recuadro.</li>
-      <li><b>Clic derecho</b>: mover, atacar, recoger chatarra o ir a la plaza.</li>
+      <li><b>Clic derecho</b>: mover, atacar, recoger chatarra, ir a una plaza o vender romero en la ciudad.</li>
       <li><b>Flechas</b> o bordes de la pantalla: mover la cámara. <b>Espacio</b>: volver a casa.</li>
+      <li>Las plazas se quedan sin turistas: explora para encontrar más.</li>
       <li>Derriba el Ayuntamiento antes de que desaloje la Casa del Patriarca.</li>
     </ul>
-    <p class="ver">Versión 0.2</p>
+    <p class="ver">Versión 0.3</p>
   </div>
 </div>
 
