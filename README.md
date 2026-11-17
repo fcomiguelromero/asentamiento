@@ -8,9 +8,9 @@ Hecho con HTML, CSS y JavaScript sobre canvas, sin librerías. Todos los gráfic
 
 Abre `index.html` en el navegador, o la versión publicada en GitHub Pages.
 
-## Versión 0.1
+## Versión 0.2
 
 - Unidades: chatarrero, echadora de la buenaventura y navajero.
-- Edificios: chabola principal, chabola (cartón, uralita y ladrillo) y Taberna El Pincho.
+- Edificios: Casa del Patriarca, chabola (cartón, uralita y ladrillo) y Taberna El Pincho.
 - Rival: el Ayuntamiento, con policías locales e inspectores de Urbanismo.
 - Niebla de guerra, minimapa, atajos de teclado y tres niveles de dificultad.

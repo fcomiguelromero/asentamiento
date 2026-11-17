@@ -1,5 +1,5 @@
 'use strict';
-/* Asentamiento — lógica del juego (v0.1) */
+/* Asentamiento — lógica del juego (v0.2) */
 const N = 48;
 
 const DEF = {
@@ -8,13 +8,13 @@ const DEF = {
   navajero: { nombre: 'Navajero', tipo: 'u', hp: 90, vel: 2.9, dano: 10, cad: .8, alc: .9, vista: 6, coste: { d: 60, c: 20 }, t: 11, tecla: 'N', desc: 'Defiende el asentamiento cuerpo a cuerpo.' },
   policia: { nombre: 'Policía local', tipo: 'u', hp: 55, vel: 2.5, dano: 6, cad: .9, alc: .9, vista: 6, desc: 'Viene a desalojar, porra en mano.' },
   inspector: { nombre: 'Inspector de Urbanismo', tipo: 'u', hp: 40, vel: 2.2, dano: 6, cad: 1.6, alc: 4.5, vista: 7, proy: true, desc: 'Lanza multas a distancia. Duelen.' },
-  principal: { nombre: 'Chabola principal', tipo: 'e', tam: 3, hp: 700, pop: 6, vista: 8, produce: ['chatarrero', 'echadora'], desc: 'El corazón del asentamiento. Aquí se descarga la chatarra y el dinero.' },
+  principal: { nombre: 'Casa del Patriarca', tipo: 'e', tam: 3, hp: 700, pop: 6, vista: 8, produce: ['chatarrero', 'echadora'], desc: 'El corazón del asentamiento. Aquí se descarga la chatarra y el dinero.' },
   chabola: { nombre: 'Chabola', tipo: 'e', tam: 2, hp: 180, vista: 4, coste: { c: 50 }, t: 12, tecla: 'C', desc: 'Da sitio para más gente.' },
   taberna: { nombre: 'Taberna El Pincho', tipo: 'e', tam: 2, hp: 300, vista: 4, coste: { c: 90, d: 30 }, t: 16, tecla: 'T', produce: ['navajero'], desc: 'Entre caña y caña, aquí se curten los navajeros.' },
   ayuntamiento: { nombre: 'Ayuntamiento', tipo: 'e', tam: 4, hp: 1100, vista: 8, desc: 'De aquí salen las patrullas. Derríbalo para ganar.' },
   bloque: { nombre: 'Bloque de pisos', tipo: 'd', tam: 2, hp: 1 },
   monton: { nombre: 'Montón de chatarra', tipo: 'r', tam: 1, hp: 1, desc: 'Manda aquí a los chatarreros con el botón derecho.' },
-  plaza: { nombre: 'Plaza de la fuente', tipo: 'p', tam: 2, hp: 1, desc: 'Manda aquí a las echadoras para ganar dinero.' }
+  plaza: { nombre: 'Plaza de la fuente', tipo: 'p', tam: 2, hp: 1, desc: 'Llena de turistas. Manda aquí a las echadoras para ganar dinero.' }
 };
 const NIVEL = [
   { nombre: 'cartón', pop: 4, hp: 180 },
@@ -214,6 +214,7 @@ function nuevaPartida(dif) {
     let tp = h > 1.35 ? 1 : 0;
     if (x >= 30 && y <= 17) tp = (x === 30 || y === 17) ? 3 : 2;
     if (x >= 22 && x <= 27 && y >= 22 && y <= 27) tp = 3;
+    if (x >= 36 && x <= 43 && y >= 3 && y <= 10) tp = 3;
     G.tiles[y * N + x] = tp;
   }
   for (let bx = 32; bx <= 44; bx += 3) for (let by = 1; by <= 13; by += 3) {
@@ -228,7 +229,18 @@ function nuevaPartida(dif) {
   crear('chatarrero', 11.5, 36.5, 0); crear('chatarrero', 11.5, 37.5, 0); crear('chatarrero', 11.5, 38.5, 0);
   crear('echadora', 10.5, 35.5, 0);
   for (let i = 0; i < G.dif.guardias; i++) crearEnemigo('policia', true);
-  G.terreno = pintarTerreno(G.tiles, N);
+  // decorado que no bloquea el paso
+  G.deco = []; G.trozos = new Map();
+  const dec = function (k, x, y, v) { G.deco.push({ k: k, x: x, y: y, v: v || 0, id: G.deco.length + 1, dir: rnd() > .5 ? 1 : -1, deco: true }); };
+  [2, 6, 10, 14].forEach(function (y) { dec('farola', 30.5, y + .5); });
+  [33, 37, 41, 45].forEach(function (x) { dec('farola', x + .5, 17.5); });
+  [[22.3, 22.3], [27.7, 22.3], [22.3, 27.7], [27.7, 27.7], [36.4, 10.6], [43.6, 10.6]].forEach(function (q) { dec('farola', q[0], q[1]); });
+  [[23, 27.2], [27.2, 23], [36.5, 3.5], [43.5, 3.5], [36.4, 7], [30.5, 8.5], [30.5, 12.5], [39.5, 17.5]].forEach(function (q) { dec('arbol', q[0], q[1]); });
+  [[24.2, 22.6], [26.8, 27.4], [38.5, 10.6], [41.5, 10.6]].forEach(function (q) { dec('banco', q[0], q[1]); });
+  [[31.5, 16.5], [34.5, 2.5], [46.5, 9.5], [37.5, 12.5]].forEach(function (q) { dec('contenedor', q[0], q[1]); });
+  dec('bidon', 11.6, 40.6);
+  for (let i = 0; i < 8; i++) { const a = i * .785 + .3, r = 1.75 + (i % 3) * .28; dec('turista', 25 + Math.cos(a) * r, 25 + Math.sin(a) * r, i); G.deco[G.deco.length - 1].dir = Math.cos(a) - Math.sin(a) > 0 ? -1 : 1; }
+  for (let i = 0; i < 70; i++) { const x = 1 + rnd() * (N - 2), y = 1 + rnd() * (N - 2); if (G.tiles[Math.floor(y) * N + Math.floor(x)] < 2 && libre(Math.floor(x), Math.floor(y)) && Math.hypot(x - 10, y - 38) > 4) dec('matojo', x, y, Math.floor(rnd() * 4)); }
   calcVision();
   centrar(base.x + 1.5, base.y + 1.5);
   document.getElementById('avisos').innerHTML = '';
@@ -533,7 +545,14 @@ function pintar() {
   cx.save();
   const ox = Math.round(G.cam.x), oy = Math.round(G.cam.y);
   cx.translate(-ox, -oy);
-  cx.drawImage(G.terreno, -N * 32, -40);
+  const esc = Math.min(2, DPR * Z), TZ = 640;
+  for (let j = Math.floor(oy / TZ); j <= Math.floor((oy + H) / TZ); j++) for (let i = Math.floor(ox / TZ); i <= Math.floor((ox + W) / TZ); i++) {
+    const x0 = i * TZ, y0 = j * TZ;
+    if (x0 + TZ < -N * 32 - 8 || x0 > N * 32 + 8 || y0 + TZ < -8 || y0 > N * 32 + 8) continue;
+    const clave = i + ',' + j; let tz = G.trozos.get(clave);
+    if (!tz) { if (G.trozos.size >= 14) G.trozos.delete(G.trozos.keys().next().value); tz = pintarTrozo(G.tiles, N, x0, y0, TZ, esc); G.trozos.set(clave, tz); }
+    cx.drawImage(tz, x0, y0, TZ + 2, TZ + 2);
+  }
   // niebla
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     const i = y * N + x; if (G.vis[i]) continue;
@@ -550,8 +569,10 @@ function pintar() {
   // entidades ordenadas por profundidad
   const lista = [];
   for (const e of G.ents) { if (seVe(e)) { const c = centro(e); e._z = c.x + c.y; lista.push(e); } }
+  for (const d of G.deco) { const i = Math.floor(d.y) * N + Math.floor(d.x); if (G.expl[i] && (d.k !== 'turista' || G.vis[i])) { d._z = d.x + d.y; d._v = G.vis[i]; lista.push(d); } }
   lista.sort(function (a, b) { return a._z - b._z; });
   for (const e of lista) {
+    if (e.deco) { const p = iso(e.x, e.y); cx.save(); cx.translate(p[0], p[1]); if (e.dir < 0 && e.k !== 'farola') cx.scale(-1, 1); DIB[e.k](cx, e, t); cx.restore(); continue; }
     const sel = G.sel.indexOf(e) >= 0;
     if (e.d.tam) {
       if (sel) dibRombo(cx, e.x, e.y, e.d.tam, e.eq === 0 ? '#7BD45A' : e.eq === 1 ? '#E24B4A' : '#F2D16B', 3);
@@ -561,7 +582,7 @@ function pintar() {
       DIB[e.k](cx, e, t);
       if (e.flash > 0) cx.translate(-2, 0);
       cx.globalAlpha = 1;
-      const top = iso(e.x, e.y), alto = e.k === 'ayuntamiento' ? 96 : e.k === 'principal' ? 50 : 40;
+      const top = iso(e.x, e.y), alto = e.k === 'ayuntamiento' ? 100 : e.k === 'principal' ? 80 : 44;
       if (e.d.tipo === 'e' && !tenue) {
         if (e.obra < 1) dibBarra(top[0], top[1] - alto + 16, 40, e.obra, '#F2D16B');
         else if (e.hp < e.hpMax || sel) dibVida(cx, top[0], top[1] - alto + 16, 12 * e.d.tam + 14, e.hp / e.hpMax, e.eq === 0);
@@ -573,7 +594,7 @@ function pintar() {
       cx.save(); cx.translate(p[0] + (e.flash > 0 ? 2 : 0), p[1]); cx.scale(e.dir, 1);
       DIB[e.k](cx, e, t);
       cx.restore();
-      if (e.hp < e.hpMax || sel) dibVida(cx, p[0], p[1] - 42, 22, e.hp / e.hpMax, e.eq === 0);
+      if (e.hp < e.hpMax || sel) dibVida(cx, p[0], p[1] - 47, 22, e.hp / e.hpMax, e.eq === 0);
     }
   }
   // efectos
@@ -710,7 +731,7 @@ function entEn(sx, sy) {
   for (const e of G.ents) {
     if (e.d.tam || !seVe(e)) continue;
     const p = enPantalla(e.x, e.y);
-    if (Math.abs(sx - p.x) < 12 && sy > p.y - 36 && sy < p.y + 7 && (!mejor || e._z > mejor._z)) mejor = e;
+    if (Math.abs(sx - p.x) < 12 && sy > p.y - 40 && sy < p.y + 7 && (!mejor || e._z > mejor._z)) mejor = e;
   }
   if (mejor) return mejor;
   const w = [mundo(sx, sy), mundo(sx, sy + 20)];
@@ -847,7 +868,8 @@ window.addEventListener('blur', function () { for (const k in teclas) teclas[k] 
 /* ---------- Arranque ---------- */
 function medir() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
-  Z = window.innerWidth < 760 ? 1 : 1.3;
+  Z = window.innerWidth < 760 ? 1 : 1.5;
+  if (G && G.trozos) G.trozos.clear();
   W = window.innerWidth / Z; H = window.innerHeight / Z;
   cv.width = Math.round(window.innerWidth * DPR); cv.height = Math.round(window.innerHeight * DPR);
   if (G) ajustarCam();
