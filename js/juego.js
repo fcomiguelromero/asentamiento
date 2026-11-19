@@ -1,5 +1,5 @@
 'use strict';
-/* Asentamiento — lógica del juego (v0.3) */
+/* Asentamiento — lógica del juego (v0.4) */
 const N = 48;
 
 const DEF = {
@@ -15,6 +15,7 @@ const DEF = {
   taberna: { nombre: 'Taberna El Pincho', tipo: 'e', tam: 2, hp: 300, vista: 4, coste: { c: 90, d: 30 }, t: 16, tecla: 'T', produce: ['navajero'], desc: 'Entre caña y caña, aquí se curten los navajeros.' },
   ayuntamiento: { nombre: 'Ayuntamiento', tipo: 'e', tam: 4, hp: 1100, vista: 8, desc: 'De aquí salen las patrullas. Derríbalo para ganar.' },
   bloque: { nombre: 'Bloque de pisos', tipo: 'd', tam: 2, hp: 1 },
+  contenedor: { nombre: 'Contenedor de basura', tipo: 'r', tam: 1, hp: 1, desc: 'Siempre hay algo aprovechable. Manda aquí a los chatarreros.' },
   monton: { nombre: 'Montón de chatarra', tipo: 'r', tam: 1, hp: 1, desc: 'Manda aquí a los chatarreros con el botón derecho.' },
   plaza: { nombre: 'Plaza', tipo: 'p', tam: 2, hp: 1, desc: 'Manda aquí a las echadoras. Cuando los turistas se cansan de dar dinero, se van.' }
 };
@@ -31,6 +32,8 @@ const DIF = {
 const PLAZAS = [{ x: 24, y: 24, cant: 500, nom: 'Plaza de la fuente' }, { x: 37, y: 30, cant: 900, nom: 'Plaza del mercado' }, { x: 26, y: 6, cant: 1400, nom: 'Plaza de la catedral' }];
 const VENTA_ROMERO = 6;
 function nombreDe(e) { return e.nom || e.d.nombre; }
+function esChatarra(e) { return (e.k === 'monton' || e.k === 'contenedor') && !e.muerto; }
+const NIVEL_CASA = [{ nombre: 'humilde', pop: 6, hp: 700 }, { nombre: 'ampliada', pop: 10, hp: 1000, coste: { c: 150, d: 100 }, t: 25 }, { nombre: 'señorial', pop: 14, hp: 1400, coste: { c: 250, d: 200 }, t: 35 }];
 const POP_TOPE = 40, CARGA_CHATARRA = 5, CARGA_DINERO = 25;
 
 let G = null;
@@ -211,7 +214,7 @@ function nuevaPartida(dif) {
   G = {
     dif: DIF[dif], t: 0, ents: [], porId: new Map(), id: 1, dinero: 150, chatarra: 60, sel: [], cam: { x: 0, y: 0 },
     tiles: new Uint8Array(N * N), bloq: new Uint8Array(N * N), expl: new Uint8Array(N * N), vis: new Uint8Array(N * N),
-    fx: [], fin: null, modo: null, ia: { t: DIF[dif].primera, ola: 0, tg: 0, tr: 0 }, grupos: {}, alertaT: 0, visT: 0, uiT: 0, firma: '', arrastre: null
+    fx: [], ruinas: [], fin: null, modo: null, ia: { t: DIF[dif].primera, ola: 0, tg: 0, tr: 0 }, grupos: {}, alertaT: 0, visT: 0, uiT: 0, firma: '', arrastre: null
   };
   const rnd = mulberry(7);
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
@@ -227,6 +230,7 @@ function nuevaPartida(dif) {
     crear('bloque', bx, by, 2, { alto: 34 + Math.floor(rnd() * 3) * 13, tono: Math.floor(rnd() * 4) });
   }
   crear('ayuntamiento', 38, 5, 1);
+  [[31, 16], [34, 2], [46, 9], [37, 12], [42, 16], [31, 5], [45, 2]].forEach(function (q) { if (libre(q[0], q[1])) crear('contenedor', q[0], q[1], 2, { cant: 150, cantMax: 150 }); });
   PLAZAS.forEach(function (q) { crear('plaza', q.x, q.y, 2, { cant: q.cant, cantMax: q.cant, nom: q.nom }); });
   [[15, 34, 300], [16, 37, 300], [14, 41, 300], [5, 31, 400], [19, 43, 400], [20, 31, 500], [16, 22, 500], [33, 33, 500], [39, 26, 500], [9, 14, 500], [26, 12, 400], [44, 40, 600]]
     .forEach(function (m) { crear('monton', m[0], m[1], 2, { cant: m[2], cantMax: m[2] }); });
@@ -242,7 +246,6 @@ function nuevaPartida(dif) {
   [[36.4, 10.6], [43.6, 10.6]].forEach(function (q) { dec('farola', q[0], q[1]); });
   [[36.5, 3.5], [43.5, 3.5], [36.4, 7], [30.5, 8.5], [30.5, 12.5], [39.5, 17.5]].forEach(function (q) { dec('arbol', q[0], q[1]); });
   [[38.5, 10.6], [41.5, 10.6]].forEach(function (q) { dec('banco', q[0], q[1]); });
-  [[31.5, 16.5], [34.5, 2.5], [46.5, 9.5], [37.5, 12.5]].forEach(function (q) { dec('contenedor', q[0], q[1]); });
   dec('bidon', 11.6, 40.6);
   G.ents.filter(function (e) { return e.k === 'plaza'; }).forEach(function (pz) {
     const X = pz.x, Y = pz.y;
@@ -269,7 +272,7 @@ function ajustarCam() {
 }
 
 /* ---------- Recursos y población ---------- */
-function popMax() { let p = 0; for (const e of G.ents) if (e.eq === 0 && e.d.tipo === 'e' && e.obra >= 1) p += e.k === 'chabola' ? NIVEL[e.nivel || 0].pop : (e.d.pop || 0); return Math.min(POP_TOPE, p); }
+function popMax() { let p = 0; for (const e of G.ents) if (e.eq === 0 && e.d.tipo === 'e' && e.obra >= 1) p += e.k === 'chabola' ? NIVEL[e.nivel || 0].pop : e.k === 'principal' ? NIVEL_CASA[e.nivel || 0].pop : (e.d.pop || 0); return Math.min(POP_TOPE, p); }
 function popUso() { let p = 0; for (const e of G.ents) { if (e.eq !== 0) continue; if (e.d.tipo === 'u') p++; else if (e.cola) for (const it of e.cola) if (it.k !== 'mejora') p++; } return p; }
 function puede(c) { return G.dinero >= (c.d || 0) && G.chatarra >= (c.c || 0); }
 function pagar(c) { G.dinero -= c.d || 0; G.chatarra -= c.c || 0; }
@@ -299,6 +302,7 @@ function matar(e) {
   const c = centro(e);
   G.fx.push({ t: 'humo', x: c.x, y: c.y, v: 0, dur: .5, r: e.d.tam ? 30 * e.d.tam : 14 });
   if (e.d.tipo === 'e' && seVe(e)) son('cae');
+  if (e.d.tipo === 'e' && e.obra >= 1) G.ruinas.push({ x: e.x, y: e.y, tam: e.d.tam, id: e.id, v: 0 });
   if (e.k === 'ayuntamiento') terminar('victoria');
   if (e.k === 'principal' && e.eq === 0 && !G.ents.some(function (o) { return o !== e && o.k === 'principal' && o.eq === 0 && !o.muerto; })) terminar('derrota');
 }
@@ -328,7 +332,7 @@ function ciclo(u, dt, o, dinero) {
   if (u.fase === 'ir') {
     let m = ent(o.obj);
     if (!m || m.muerto || (dinero && m.cant <= 0)) {
-      m = dinero ? masCercano(u, function (e) { return e.k === 'plaza' && e.cant > 0; }) : masCercano(u, function (e) { return e.k === 'monton' && !e.muerto; }, 12);
+      m = dinero ? masCercano(u, function (e) { return e.k === 'plaza' && e.cant > 0; }) : masCercano(u, function (e) { return esChatarra(e); }, 12);
       if (!m) { u.orden = { t: 'idle' }; if (dinero) aviso('No quedan plazas con turistas.', true); return; }
       o.obj = m.id; u.ruta = null;
     }
@@ -445,12 +449,13 @@ function updE(b, dt) {
   if (it.p >= 1) {
     b.cola.shift();
     if (it.k === 'mejora') {
-      b.nivel = (b.nivel || 0) + 1; b.hpMax = NIVEL[b.nivel].hp; b.hp = Math.min(b.hpMax, b.hp + 100);
-      aviso('Chabola mejorada a ' + NIVEL[b.nivel].nombre + '.'); son('listo');
+      const T = b.k === 'principal' ? NIVEL_CASA : NIVEL;
+      b.nivel = (b.nivel || 0) + 1; const sube = T[b.nivel].hp - b.hpMax; b.hpMax = T[b.nivel].hp; b.hp = Math.min(b.hpMax, b.hp + Math.max(100, sube));
+      aviso(b.k === 'principal' ? 'La Casa del Patriarca ya es ' + T[b.nivel].nombre + '.' : 'Chabola mejorada a ' + T[b.nivel].nombre + '.'); son('listo');
     } else {
       const u = salir(b, it.k);
       if (u) {
-        if (u.k === 'chatarrero') { const m = masCercano(u, function (e) { return e.k === 'monton' && !e.muerto; }, 14); if (m) ordenar(u, { t: 'recoger', obj: m.id }); }
+        if (u.k === 'chatarrero') { const m = masCercano(u, function (e) { return esChatarra(e); }, 14); if (m) ordenar(u, { t: 'recoger', obj: m.id }); }
         if (u.k === 'echadora') { const p = masCercano(u, function (e) { return e.k === 'plaza' && e.cant > 0; }); if (p) ordenar(u, { t: 'ganar', obj: p.id }); }
         if (u.k === 'romero') ordenar(u, { t: 'vender', x: 33.5, y: 14.5 });
         son('listo');
@@ -558,6 +563,8 @@ function actualizar(dt) {
     }
   }
   G.fx = G.fx.filter(function (f) { return f.v < f.dur; });
+  for (const r of G.ruinas) r.v += dt;
+  G.ruinas = G.ruinas.filter(function (r) { return r.v < 25; });
   if (G.ents.some(function (e) { return e.muerto; })) {
     G.ents = G.ents.filter(function (e) { if (e.muerto) G.porId.delete(e.id); return !e.muerto; });
     G.sel = G.sel.filter(function (e) { return !e.muerto; });
@@ -595,6 +602,7 @@ function pintar() {
     const p = casilla(G.modo.k, raton.x, raton.y), ok = valido(G.modo.k, p.x, p.y);
     dibRombo(cx, p.x, p.y, DEF[G.modo.k].tam, ok ? '#7BD45A' : '#E24B4A', 3, ok ? 'rgba(123,212,90,.3)' : 'rgba(226,75,74,.3)');
   }
+  for (const r of G.ruinas) { const i = Math.floor(r.y + r.tam / 2) * N + Math.floor(r.x + r.tam / 2); if (G.expl[i]) dibRuinas(cx, r, t); }
   // entidades ordenadas por profundidad
   const lista = [];
   for (const e of G.ents) { if (seVe(e)) { const c = centro(e); e._z = c.x + c.y; lista.push(e); } }
@@ -608,10 +616,13 @@ function pintar() {
       const tenue = e.eq !== 0 && !visible(e);
       if (e.obra < 1) { dibRombo(cx, e.x + .1, e.y + .1, e.d.tam - .2, '#F2D16B', 2, 'rgba(242,209,107,.15)'); cx.globalAlpha = .35 + .55 * e.obra; }
       if (e.flash > 0) cx.translate(2, 0);
-      DIB[e.k](cx, e, t);
+      let hImg = 0;
+      if (IMG[claveImagen(e)]) { cx.globalAlpha = 1; hImg = dibEdificio(cx, e, t); }
+      else if (e.k === 'contenedor') { const q = iso(e.x + .5, e.y + .5); cx.save(); cx.translate(q[0], q[1] + 4); cx.scale(1.7, 1.7); DIB.contenedor(cx, e, t); cx.restore(); hImg = 40; }
+      else DIB[e.k](cx, e, t);
       if (e.flash > 0) cx.translate(-2, 0);
       cx.globalAlpha = 1;
-      const top = iso(e.x, e.y), alto = e.k === 'ayuntamiento' ? 100 : e.k === 'principal' ? 80 : 44;
+      const bas = iso(e.x + e.d.tam, e.y + e.d.tam), top = [bas[0], bas[1]], alto = hImg ? hImg - 6 : (e.k === 'ayuntamiento' ? 100 : e.k === 'principal' ? 80 : 44) + e.d.tam * 32;
       if (e.d.tipo === 'e' && !tenue) {
         if (e.obra < 1) dibBarra(top[0], top[1] - alto + 16, 40, e.obra, '#F2D16B');
         else if (e.hp < e.hpMax || sel) dibVida(cx, top[0], top[1] - alto + 16, 12 * e.d.tam + 14, e.hp / e.hpMax, e.eq === 0);
@@ -652,7 +663,7 @@ function pintar() {
   if (raton.dentro && raton.tipo === 'mouse' && !a && !G.modo) {
     const e = entEn(raton.x, raton.y);
     if (e && e.d.tipo !== 'd') {
-      const txt = nombreDe(e) + (e.k === 'monton' || e.k === 'plaza' ? ' (' + e.cant + ')' : '');
+      const txt = nombreDe(e) + (esChatarra(e) || e.k === 'plaza' ? ' (' + e.cant + ')' : '');
       cx.font = 'bold 13px sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'alphabetic';
       cx.lineWidth = 3.5; cx.strokeStyle = TINTA; cx.strokeText(txt, raton.x, raton.y + 30);
       cx.fillStyle = '#F4E9D2'; cx.fillText(txt, raton.x, raton.y + 30);
@@ -680,7 +691,7 @@ function pintarMinimapa() {
     if (!seVe(e)) continue;
     const c = centro(e), px = (c.x - c.y) * MS + 110, py = (c.x + c.y) * MS * .5 + 3;
     const s = e.d.tam ? e.d.tam * 2 + 1 : 3;
-    mx.fillStyle = e.eq === 0 ? '#2F7D4F' : e.eq === 1 ? '#C8321E' : e.k === 'monton' ? '#4A4F55' : e.k === 'plaza' ? '#3FA9E0' : '#8A7F76';
+    mx.fillStyle = e.eq === 0 ? '#2F7D4F' : e.eq === 1 ? '#C8321E' : esChatarra(e) ? '#4A4F55' : e.k === 'plaza' ? '#3FA9E0' : '#8A7F76';
     mx.fillRect(px - s / 2, py - s / 2, s, s);
   }
   const k = MS / 32;
@@ -705,6 +716,10 @@ function acciones() {
     (b.d.produce || []).forEach(function (k) {
       r.push({ nombre: DEF[k].nombre.split(' ')[0], sub: textoCoste(DEF[k].coste), tecla: DEF[k].tecla, fn: function () { encolar(b, k); } });
     });
+    if (b.k === 'principal' && (b.nivel || 0) < 2 && !b.cola.some(function (i) { return i.k === 'mejora'; })) {
+      const nc = NIVEL_CASA[(b.nivel || 0) + 1];
+      r.push({ nombre: 'Ampliar casa', sub: textoCoste(nc.coste), tecla: 'M', fn: function () { mejorar(b); } });
+    }
     if (b.k === 'chabola' && (b.nivel || 0) < 2 && !b.cola.length) {
       const nv = NIVEL[(b.nivel || 0) + 1];
       r.push({ nombre: 'Mejorar a ' + nv.nombre, sub: textoCoste(nv.coste), tecla: 'M', fn: function () { mejorar(b); } });
@@ -720,7 +735,7 @@ function encolar(b, k) {
   pagar(c); b.cola.push({ k: k, p: 0, t: DEF[k].t }); son('sel'); G.firma = '?';
 }
 function mejorar(b) {
-  const nv = NIVEL[(b.nivel || 0) + 1];
+  const nv = (b.k === 'principal' ? NIVEL_CASA : NIVEL)[(b.nivel || 0) + 1];
   if (!puede(nv.coste)) { falta(nv.coste); return; }
   pagar(nv.coste); b.cola.push({ k: 'mejora', p: 0, t: nv.t }); son('sel'); G.firma = '?';
 }
@@ -730,9 +745,14 @@ function pintarRetrato() {
   rt.style.display = e ? 'block' : 'none';
   if (!e) return;
   rx.setTransform(2, 0, 0, 2, 0, 0); rx.clearRect(0, 0, 96, 96);
+  if (!e.d.tam && pintarRetratoImagen(rx, e)) return;
   medallonFondo(rx, 48, 48, 46);
   rx.save(); rx.beginPath(); rx.arc(48, 48, 37, 0, 6.2832); rx.clip();
-  if (e.d.tam) {
+  const ki = e.d.tam ? claveImagen(e) : null;
+  if (ki && IMG[ki]) {
+    const im = IMG[ki], s = Math.min(64 / im.width, 66 / im.height);
+    rx.drawImage(im, 48 - im.width * s / 2, 50 - im.height * s / 2, im.width * s, im.height * s);
+  } else if (e.d.tam) {
     const s = Math.min(1.1, 62 / (e.d.tam * 64)), alto = e.k === 'ayuntamiento' ? 110 : e.k === 'principal' ? 70 : e.k === 'bloque' ? e.alto : 36;
     rx.translate(48, 52 + alto * s * .5 - e.d.tam * 16 * s); rx.scale(s, s);
     DIB[e.k](rx, Object.assign({}, e, { x: 0, y: 0 }), G.t);
@@ -762,7 +782,8 @@ function refrescarPanel(forzar) {
     const e = G.sel[0];
     h = '<h2>' + nombreDe(e) + (e.k === 'chabola' ? ' de ' + NIVEL[e.nivel || 0].nombre : '') + '</h2>';
     if (e.d.tipo === 'u' || e.d.tipo === 'e') h += '<div class="vida"><i style="width:' + Math.max(0, 100 * e.hp / e.hpMax) + '%"></i></div>';
-    if (e.k === 'monton') h += '<p>Chatarra restante: ' + e.cant + '</p>';
+    if (esChatarra(e)) h += '<p>Chatarra restante: ' + e.cant + '</p>';
+    if (e.k === 'principal') h += '<p>Casa ' + NIVEL_CASA[e.nivel || 0].nombre + ': sitio para ' + NIVEL_CASA[e.nivel || 0].pop + ' personas.</p>';
     if (e.k === 'plaza') h += e.cant > 0 ? '<p>Dinero que aún sueltan los turistas: ' + e.cant + '</p>' : '<p>Los turistas se han ido.</p>';
     if (e.obra < 1) h += '<p>En obras: ' + Math.floor(e.obra * 100) + ' %</p>';
     else if (e.k === 'chabola') h += '<p>Sitio para ' + NIVEL[e.nivel || 0].pop + ' personas.</p>';
@@ -822,7 +843,7 @@ function ordenInteligente(sx, sy, atacando) {
   let n = 0, hecho = false;
   us.forEach(function (u) {
     if (e && e.eq === 1 && u.d.dano) { ordenar(u, { t: 'atacar', obj: e.id }); hecho = true; }
-    else if (e && e.k === 'monton' && u.k === 'chatarrero') { ordenar(u, { t: 'recoger', obj: e.id }); hecho = true; }
+    else if (e && esChatarra(e) && u.k === 'chatarrero') { ordenar(u, { t: 'recoger', obj: e.id }); hecho = true; }
     else if (u.k === 'romero' && enCiudad(w.x, w.y) && !(e && e.eq === 1)) { ordenar(u, { t: 'vender', x: w.x, y: w.y }); hecho = false; }
     else if (e && e.k === 'plaza' && u.k === 'echadora') { ordenar(u, { t: 'ganar', obj: e.id }); hecho = true; }
     else if (e && e.eq === 0 && e.d.tipo === 'e' && e.obra < 1 && u.k === 'chatarrero') { ordenar(u, { t: 'construir', obj: e.id }); hecho = true; }
@@ -957,11 +978,10 @@ document.getElementById('b-son').addEventListener('click', function () {
 });
 
 let ultimo = 0;
-const elInicio = document.getElementById('inicio'), ax = document.getElementById('arte').getContext('2d');
+
 function bucle(ts) {
   const dt = Math.min(.05, (ts - ultimo) / 1000 || 0); ultimo = ts;
   if (G) { if (!G.fin) actualizar(dt); pintar(); }
-  if (!elInicio.classList.contains('oculto')) { ax.setTransform(2, 0, 0, 2, 0, 0); pintarCartel(ax, ts / 1000, 560, 300); }
   requestAnimationFrame(bucle);
 }
 requestAnimationFrame(bucle);
