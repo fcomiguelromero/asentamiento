@@ -827,7 +827,7 @@ function dibCasilla(c, tiles, N, x, y) {
     for (let i = 0; i < 3; i++) { const q = [p[0] - 16 + azar(x + i, y * 3) * 32, p[1] - 6 + azar(x * 3, y + i) * 12]; linea(c, q, [q[0] - 2.5, q[1] - 6], '#7F8C45'); linea(c, q, [q[0] + 2.5, q[1] - 6], '#8E9A4E'); linea(c, q, [q[0], q[1] - 7.5], '#6F7C3A'); }
     if (r2 > .7) { c.lineWidth = 1; circ(c, p[0] + 8, p[1] - 3, 1.5, r > .5 ? '#F2EDE4' : '#F2D16B', false); circ(c, p[0] - 9, p[1] + 3, 1.3, '#F2EDE4', false); }
   } else if (tp === 2) {
-    const vx = (x - 31) % 3 === 0, hy = y % 3 === 0;
+    const vx = (x - 30) % 4 === 0, hy = y % 4 === 0;
     c.lineWidth = 2;
     if (vx && !hy) linea(c, iso(x + .5, y + .2), iso(x + .5, y + .8), '#E4E0D4');
     else if (hy && !vx) linea(c, iso(x + .2, y + .5), iso(x + .8, y + .5), '#E4E0D4');

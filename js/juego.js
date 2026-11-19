@@ -1,20 +1,20 @@
 'use strict';
-/* Asentamiento — lógica del juego (v0.4) */
+/* Asentamiento — lógica del juego (v0.5) */
 const N = 48;
 
 const DEF = {
   chatarrero: { nombre: 'Chatarrero', tipo: 'u', hp: 45, vel: 2.6, dano: 4, cad: 1, alc: .9, vista: 6, coste: { d: 50 }, t: 9, tecla: 'Q', desc: 'Recoge chatarra con su carrito y levanta chabolas.' },
-  echadora: { nombre: 'Echadora de la buenaventura', tipo: 'u', hp: 35, vel: 2.5, dano: 0, vista: 5, coste: { d: 60 }, t: 10, tecla: 'E', desc: 'Va a la plaza, lee el porvenir y vuelve con dinero. La policía no se mete con ella.' },
+  echadora: { hab: { id: 'ojo', nombre: 'Mal de ojo', tecla: 'O', cd: 20, alc: 5, dur: 8, desc: 'Echa mal de ojo a un enemigo: anda y ataca a la mitad de ritmo durante 8 segundos.' }, nombre: 'Echadora de la buenaventura', tipo: 'u', hp: 35, vel: 2.5, dano: 0, vista: 5, coste: { d: 60 }, t: 10, tecla: 'E', desc: 'Va a la plaza, lee el porvenir y vuelve con dinero. La policía no se mete con ella.' },
   navajero: { nombre: 'Navajero', tipo: 'u', hp: 90, vel: 2.9, dano: 10, cad: .8, alc: .9, vista: 6, coste: { d: 60, c: 20 }, t: 11, tecla: 'N', desc: 'Defiende el asentamiento cuerpo a cuerpo.' },
-  romero: { nombre: 'Vendedora de romero', tipo: 'u', hp: 35, vel: 2.3, dano: 0, vista: 5, coste: { d: 70 }, t: 11, tecla: 'R', desc: 'Vende ramitos por las calles de la ciudad. Da poco dinero, pero no se agota. La policía no se mete con ella.' },
-  chatarreria: { nombre: 'Chatarrería', tipo: 'e', tam: 2, hp: 260, vista: 4, coste: { c: 80 }, t: 14, tecla: 'H', desc: 'Los chatarreros también descargan aquí. Constrúyela junto a montones lejanos.' },
+  romero: { hab: { id: 'ramito', nombre: 'Ramito', tecla: 'G', cd: 25, alc: 3, dur: 7, desc: 'Regala un ramito de la suerte a un enemigo: se queda 7 segundos sin atacar.' }, nombre: 'Vendedora de romero', tipo: 'u', hp: 35, vel: 2.3, dano: 0, vista: 5, coste: { d: 70 }, t: 11, tecla: 'R', desc: 'Vende ramitos por las calles de la ciudad. Da poco dinero, pero no se agota. La policía no se mete con ella.' },
+  chatarreria: { nombre: 'Chatarrería', tipo: 'e', tam: 3, hp: 260, vista: 4, coste: { c: 80 }, t: 14, tecla: 'H', desc: 'Los chatarreros también descargan aquí. Constrúyela junto a montones lejanos.' },
   policia: { nombre: 'Policía local', tipo: 'u', hp: 55, vel: 2.5, dano: 6, cad: .9, alc: .9, vista: 6, desc: 'Viene a desalojar, porra en mano.' },
   inspector: { nombre: 'Inspector de Urbanismo', tipo: 'u', hp: 40, vel: 2.2, dano: 6, cad: 1.6, alc: 4.5, vista: 7, proy: true, desc: 'Lanza multas a distancia. Duelen.' },
   principal: { nombre: 'Casa del Patriarca', tipo: 'e', tam: 3, hp: 700, pop: 6, vista: 8, produce: ['chatarrero', 'echadora', 'romero'], desc: 'El corazón del asentamiento. Aquí se descarga la chatarra y el dinero.' },
   chabola: { nombre: 'Chabola', tipo: 'e', tam: 2, hp: 180, vista: 4, coste: { c: 50 }, t: 12, tecla: 'C', desc: 'Da sitio para más gente.' },
-  taberna: { nombre: 'Taberna El Pincho', tipo: 'e', tam: 2, hp: 300, vista: 4, coste: { c: 90, d: 30 }, t: 16, tecla: 'T', produce: ['navajero'], desc: 'Entre caña y caña, aquí se curten los navajeros.' },
+  taberna: { nombre: 'Taberna El Pincho', tipo: 'e', tam: 3, hp: 300, vista: 4, coste: { c: 90, d: 30 }, t: 16, tecla: 'T', produce: ['navajero'], desc: 'Entre caña y caña, aquí se curten los navajeros.' },
   ayuntamiento: { nombre: 'Ayuntamiento', tipo: 'e', tam: 4, hp: 1100, vista: 8, desc: 'De aquí salen las patrullas. Derríbalo para ganar.' },
-  bloque: { nombre: 'Bloque de pisos', tipo: 'd', tam: 2, hp: 1 },
+  bloque: { nombre: 'Bloque de pisos', tipo: 'd', tam: 3, hp: 1 },
   contenedor: { nombre: 'Contenedor de basura', tipo: 'r', tam: 1, hp: 1, desc: 'Siempre hay algo aprovechable. Manda aquí a los chatarreros.' },
   monton: { nombre: 'Montón de chatarra', tipo: 'r', tam: 1, hp: 1, desc: 'Manda aquí a los chatarreros con el botón derecho.' },
   plaza: { nombre: 'Plaza', tipo: 'p', tam: 2, hp: 1, desc: 'Manda aquí a las echadoras. Cuando los turistas se cansan de dar dinero, se van.' }
@@ -71,6 +71,7 @@ function son(n) {
     case 'listo': tono(523, 0, .09, 'triangle', .08); tono(659, 0, .09, 'triangle', .08, .09); tono(784, 0, .16, 'triangle', .08, .18); break;
     case 'alerta': tono(740, 0, .14, 'square', .06); tono(554, 0, .14, 'square', .06, .16); tono(740, 0, .14, 'square', .06, .32); break;
     case 'cae': tono(200, 40, .5, 'sawtooth', .08); break;
+    case 'hechizo': tono(880, 1320, .12, 'triangle', .07); tono(1320, 660, .2, 'sine', .06, .1); break;
     case 'victoria': [523, 659, 784, 1047].forEach(function (f, i) { tono(f, 0, .22, 'triangle', .09, i * .16); }); break;
     case 'derrota': [392, 330, 262, 196].forEach(function (f, i) { tono(f, 0, .3, 'triangle', .09, i * .22); }); break;
   }
@@ -190,7 +191,7 @@ function irAEnt(u, e) {
 }
 function avanzar(u, dt) {
   if (!u.ruta || !u.ruta.length) return true;
-  let paso = u.d.vel * dt;
+  let paso = u.d.vel * (u.lento > 0 ? .5 : 1) * dt;
   u.anda = true;
   while (paso > 0 && u.ruta.length) {
     const p = u.ruta[0], dx = p[0] - u.x, dy = p[1] - u.y, d = Math.hypot(dx, dy);
@@ -225,12 +226,12 @@ function nuevaPartida(dif) {
     if (x >= 36 && x <= 43 && y >= 3 && y <= 10) tp = 3;
     G.tiles[y * N + x] = tp;
   }
-  for (let bx = 32; bx <= 44; bx += 3) for (let by = 1; by <= 13; by += 3) {
-    if (bx <= 43 && bx + 1 >= 36 && by <= 10 && by + 1 >= 3) continue;
+  for (let bx = 31; bx <= 43; bx += 4) for (let by = 1; by <= 13; by += 4) {
+    if (bx <= 42 && bx + 2 >= 37 && by <= 9 && by + 2 >= 4) continue;
     crear('bloque', bx, by, 2, { alto: 34 + Math.floor(rnd() * 3) * 13, tono: Math.floor(rnd() * 4) });
   }
   crear('ayuntamiento', 38, 5, 1);
-  [[31, 16], [34, 2], [46, 9], [37, 12], [42, 16], [31, 5], [45, 2]].forEach(function (q) { if (libre(q[0], q[1])) crear('contenedor', q[0], q[1], 2, { cant: 150, cantMax: 150 }); });
+  [[34, 2], [38, 14], [46, 10], [30, 6], [42, 16], [34, 10], [46, 2]].forEach(function (q) { if (libre(q[0], q[1])) crear('contenedor', q[0], q[1], 2, { cant: 150, cantMax: 150 }); });
   PLAZAS.forEach(function (q) { crear('plaza', q.x, q.y, 2, { cant: q.cant, cantMax: q.cant, nom: q.nom }); });
   [[15, 34, 300], [16, 37, 300], [14, 41, 300], [5, 31, 400], [19, 43, 400], [20, 31, 500], [16, 22, 500], [33, 33, 500], [39, 26, 500], [9, 14, 500], [26, 12, 400], [44, 40, 600]]
     .forEach(function (m) { crear('monton', m[0], m[1], 2, { cant: m[2], cantMax: m[2] }); });
@@ -243,8 +244,8 @@ function nuevaPartida(dif) {
   const dec = function (k, x, y, v) { G.deco.push({ k: k, x: x, y: y, v: v || 0, id: G.deco.length + 1, dir: rnd() > .5 ? 1 : -1, deco: true }); };
   [2, 6, 10, 14].forEach(function (y) { dec('farola', 30.5, y + .5); });
   [33, 37, 41, 45].forEach(function (x) { dec('farola', x + .5, 17.5); });
-  [[36.4, 10.6], [43.6, 10.6]].forEach(function (q) { dec('farola', q[0], q[1]); });
-  [[36.5, 3.5], [43.5, 3.5], [36.4, 7], [30.5, 8.5], [30.5, 12.5], [39.5, 17.5]].forEach(function (q) { dec('arbol', q[0], q[1]); });
+  [[37.2, 10.5], [42.6, 10.5]].forEach(function (q) { dec('farola', q[0], q[1]); });
+  [[36.6, 4.4], [42.4, 4.4], [36.6, 8.6], [42.4, 8.6], [30.5, 8.5], [30.5, 12.5], [39.5, 17.5]].forEach(function (q) { dec('arbol', q[0], q[1]); });
   [[38.5, 10.6], [41.5, 10.6]].forEach(function (q) { dec('banco', q[0], q[1]); });
   dec('bidon', 11.6, 40.6);
   G.ents.filter(function (e) { return e.k === 'plaza'; }).forEach(function (pz) {
@@ -374,6 +375,8 @@ function enVista(u) { const p = enPantalla(u.x, u.y); return p.x > 0 && p.x < W 
 
 function updU(u, dt) {
   u.anda = false; u.trabaja = false; u.cd = Math.max(0, u.cd - dt); u.pensar -= dt; u.golpeT = Math.max(0, u.golpeT - dt);
+  u.cdHab = Math.max(0, (u.cdHab || 0) - dt); u.lento = Math.max(0, (u.lento || 0) - dt); u.calmado = Math.max(0, (u.calmado || 0) - dt);
+  if (u.calmado > 0) { u.ruta = null; return; }
   const o = u.orden;
   switch (o.t) {
     case 'idle':
@@ -402,7 +405,7 @@ function updU(u, dt) {
       if (d <= u.d.alc + (e.d.tam ? .35 : 0)) {
         u.ruta = null; mirar(u, e);
         if (u.cd <= 0) {
-          u.cd = u.d.cad; u.golpeT = .22;
+          u.cd = u.d.cad * (u.lento > 0 ? 2 : 1); u.golpeT = .22;
           if (u.d.proy) G.fx.push({ t: 'multa', x: u.x, y: u.y, obj: e.id, dano: u.d.dano, autor: u.id, v: 0, dur: 9 });
           else danar(e, u.d.dano, u);
         }
@@ -423,6 +426,22 @@ function updU(u, dt) {
         if (u.tt <= 0) { G.dinero += VENTA_ROMERO; G.fx.push({ t: 'txt', x: u.x, y: u.y, v: 0, dur: 1, txt: '+' + VENTA_ROMERO, col: '#F2D16B' }); if (enVista(u)) son('moneda'); u.fase = 'ir'; u.ruta = null; }
       }
       break;
+    case 'hab': {
+      const e = ent(o.obj), h = u.d.hab;
+      if (!e || e.muerto || !h) { u.orden = o.luego || { t: 'idle' }; u.fase = null; break; }
+      if (distE(u, e) <= h.alc) {
+        u.ruta = null; mirar(u, e); u.cdHab = h.cd; u.golpeT = .4;
+        if (h.id === 'ojo') { e.lento = h.dur; G.fx.push({ t: 'txt', x: e.x, y: e.y, v: 0, dur: 1.4, txt: '¡Mal de ojo!', col: '#C9A6E8' }); }
+        else { e.calmado = h.dur; e.ruta = null; G.fx.push({ t: 'txt', x: e.x, y: e.y, v: 0, dur: 1.4, txt: '¡Ramito de la suerte!', col: '#9FD07A' }); }
+        G.fx.push({ t: 'rayo', x: u.x, y: u.y, x2: e.x, y2: e.y, v: 0, dur: .5, col: h.id === 'ojo' ? '#9B5BC0' : '#5E8B4A' });
+        son('hechizo'); u.orden = o.luego || { t: 'idle' }; u.fase = null; u.ruta = null;
+      } else {
+        u.tt = (u.tt || 0) - dt;
+        if (!u.ruta || !u.ruta.length || u.tt <= 0) { u.tt = .6; if (!irA(u, e.x, e.y)) { u.orden = o.luego || { t: 'idle' }; break; } }
+        avanzar(u, dt);
+      }
+      break;
+    }
     case 'recoger': ciclo(u, dt, o, false); break;
     case 'ganar': ciclo(u, dt, o, true); break;
     case 'construir': {
@@ -454,7 +473,14 @@ function updE(b, dt) {
       aviso(b.k === 'principal' ? 'La Casa del Patriarca ya es ' + T[b.nivel].nombre + '.' : 'Chabola mejorada a ' + T[b.nivel].nombre + '.'); son('listo');
     } else {
       const u = salir(b, it.k);
-      if (u) {
+      if (u && b.rally) {
+        const R = ent(b.rally.obj);
+        if (R && esChatarra(R) && u.k === 'chatarrero') ordenar(u, { t: 'recoger', obj: R.id });
+        else if (R && R.k === 'plaza' && u.k === 'echadora') ordenar(u, { t: 'ganar', obj: R.id });
+        else if (u.k === 'romero' && enCiudad(b.rally.x, b.rally.y)) ordenar(u, { t: 'vender', x: b.rally.x, y: b.rally.y });
+        else ordenar(u, { t: u.d.dano && u.k !== 'chatarrero' ? 'amover' : 'mover', x: b.rally.x, y: b.rally.y });
+        son('listo');
+      } else if (u) {
         if (u.k === 'chatarrero') { const m = masCercano(u, function (e) { return esChatarra(e); }, 14); if (m) ordenar(u, { t: 'recoger', obj: m.id }); }
         if (u.k === 'echadora') { const p = masCercano(u, function (e) { return e.k === 'plaza' && e.cant > 0; }); if (p) ordenar(u, { t: 'ganar', obj: p.id }); }
         if (u.k === 'romero') ordenar(u, { t: 'vender', x: 33.5, y: 14.5 });
@@ -635,6 +661,8 @@ function pintar() {
       DIB[e.k](cx, e, t);
       cx.restore();
       if (e.hp < e.hpMax || sel) dibVida(cx, p[0], p[1] - 47, 22, e.hp / e.hpMax, e.eq === 0);
+      if (e.lento > 0) { cx.lineWidth = 1.5; elip(cx, p[0], p[1] - 56, 7, 4, '#F1E6CC'); circ(cx, p[0], p[1] - 56, 2.6, '#7B3FA0'); }
+      if (e.calmado > 0) { cx.lineWidth = 2; for (let i = -1; i <= 1; i++) linea(cx, [p[0], p[1] - 50], [p[0] + i * 4, p[1] - 61 - Math.abs(i) * -2], '#5E8B4A'); circ(cx, p[0] + 4, p[1] - 58, 1.6, '#B9A6D6', false); }
     }
   }
   // efectos
@@ -642,9 +670,11 @@ function pintar() {
     const p = iso(f.x, f.y), k = f.v / f.dur;
     if (f.t === 'humo') { cx.globalAlpha = 1 - k; cx.lineWidth = 2; circ(cx, p[0], p[1] - 10 - k * 14, f.r * (.4 + k * .8), '#EDE7DC'); cx.globalAlpha = 1; }
     else if (f.t === 'txt') { cx.globalAlpha = 1 - k * k; cx.font = 'bold 14px sans-serif'; cx.textAlign = 'center'; cx.lineWidth = 3; cx.strokeStyle = TINTA; cx.strokeText(f.txt, p[0], p[1] - 44 - k * 18); cx.fillStyle = f.col; cx.fillText(f.txt, p[0], p[1] - 44 - k * 18); cx.globalAlpha = 1; }
+    else if (f.t === 'rayo') { const q = iso(f.x2, f.y2); cx.globalAlpha = 1 - k; cx.lineWidth = 3; cx.setLineDash([4, 5]); cx.beginPath(); cx.moveTo(p[0], p[1] - 22); cx.quadraticCurveTo((p[0] + q[0]) / 2, Math.min(p[1], q[1]) - 60, q[0], q[1] - 24); cx.strokeStyle = f.col; cx.stroke(); cx.setLineDash([]); cx.globalAlpha = 1; }
     else if (f.t === 'marca') { cx.globalAlpha = 1 - k; cx.lineWidth = 2.5; elip(cx, p[0], p[1], 16 * (1 - k * .6), 8 * (1 - k * .6), null, f.col); cx.globalAlpha = 1; }
     else if (f.t === 'multa') { if (G.vis[Math.floor(f.y) * N + Math.floor(f.x)]) dibMulta(cx, p[0], p[1] - 20, f.v * 14); }
   }
+  if (G.sel.length === 1 && G.sel[0].eq === 0 && G.sel[0].rally) { const r = G.sel[0].rally, q = iso(r.x, r.y); dibBanderin(cx, q[0], q[1], t, .9); }
   cx.restore();
   // acabado de cartel litográfico: tono cálido, salpicado y viñeta
   cx.globalCompositeOperation = 'multiply'; cx.fillStyle = '#F7EBD2'; cx.fillRect(0, 0, W, H); cx.globalCompositeOperation = 'source-over';
@@ -710,6 +740,16 @@ function acciones() {
       });
     }
     if (us.some(function (u) { return u.d.dano; })) r.push({ nombre: 'Atacar', sub: 'Avanza atacando', tecla: 'A', act: G.modo && G.modo.t === 'atacar', fn: function () { G.modo = { t: 'atacar' }; G.firma = '?'; } });
+    const vistos = {};
+    us.forEach(function (u) {
+      const h = u.d.hab; if (!h || vistos[h.id]) return; vistos[h.id] = 1;
+      const delTipo = us.filter(function (x) { return x.k === u.k; }), listo = delTipo.some(function (x) { return !x.cdHab; });
+      const espera = Math.ceil(Math.min.apply(null, delTipo.map(function (x) { return x.cdHab || 0; })));
+      r.push({ nombre: h.nombre, sub: listo ? 'Elige a un enemigo' : 'Lista en ' + espera + ' s', tecla: h.tecla, act: G.modo && G.modo.h === h.id, fn: function () {
+        if (!listo) { aviso('Todavía no: lista en ' + espera + ' segundos.', true); son('error'); return; }
+        G.modo = { t: 'hab', h: h.id, k: u.k }; G.firma = '?';
+      } });
+    });
     r.push({ nombre: 'Parar', sub: 'Quietos ahí', tecla: 'S', fn: function () { us.forEach(function (u) { ordenar(u, { t: 'idle' }); }); } });
   } else if (G.sel.length === 1 && G.sel[0].eq === 0 && G.sel[0].d.tipo === 'e' && G.sel[0].obra >= 1) {
     const b = G.sel[0];
@@ -771,7 +811,7 @@ function refrescarPanel(forzar) {
   const m = Math.floor(G.t / 60), s = Math.floor(G.t % 60);
   document.getElementById('reloj').textContent = m + ':' + (s < 10 ? '0' : '') + s;
   cv.classList.toggle('apuntar', !!G.modo);
-  const firma = G.sel.map(function (e) { return e.id + ':' + (e.nivel || 0) + ':' + (e.obra >= 1 ? 1 : 0) + ':' + (e.cola ? e.cola.length : 0); }).join(',') + '|' + (G.modo ? G.modo.t + (G.modo.k || '') : '');
+  const firma = G.sel.map(function (e) { return e.id + ':' + (e.nivel || 0) + ':' + (e.obra >= 1 ? 1 : 0) + ':' + (e.cola ? e.cola.length : 0); }).join(',') + '|' + (G.modo ? G.modo.t + (G.modo.k || '') : '') + '|' + G.sel.map(function (e) { return Math.ceil(e.cdHab || 0); }).join(',');
   if (forzar || firma !== G.firma) {
     G.firma = firma; accAct = acciones();
     elOrd.innerHTML = accAct.map(function (a, i) { return '<button type="button" data-i="' + i + '"' + (a.act ? ' class="act"' : '') + '><b>' + a.nombre + '</b><small>' + a.sub + '</small><kbd>' + a.tecla + '</kbd></button>'; }).join('');
@@ -788,6 +828,8 @@ function refrescarPanel(forzar) {
     if (e.obra < 1) h += '<p>En obras: ' + Math.floor(e.obra * 100) + ' %</p>';
     else if (e.k === 'chabola') h += '<p>Sitio para ' + NIVEL[e.nivel || 0].pop + ' personas.</p>';
     if (e.d.desc) h += '<p>' + e.d.desc + '</p>';
+    if (e.eq === 0 && e.d.hab) h += '<p><b>' + e.d.hab.nombre + ' (' + e.d.hab.tecla + '):</b> ' + e.d.hab.desc + '</p>';
+    if (e.eq === 0 && e.d.produce) h += '<p>Clic derecho en el mapa: punto de reunión.</p>';
     if (e.eq === 0 && e.cola && e.cola.length) {
       h += '<div class="cola"><div class="prog"><i style="width:' + Math.floor(e.cola[0].p * 100) + '%"></i></div>' + e.cola.map(function (it) { return '<span>' + (it.k === 'mejora' ? 'Mejora' : DEF[it.k].nombre.split(' ')[0]) + '</span>'; }).join('') + '</div>';
     }
@@ -837,8 +879,28 @@ function colocar(sx, sy) {
   if (!teclas.Shift) G.modo = null;
   son('orden'); G.firma = '?';
 }
+function lanzarHab(sx, sy) {
+  const e = entEn(sx, sy), k = G.modo.k;
+  if (!e || e.eq !== 1 || e.d.tipo !== 'u') { aviso('Elige a una unidad del Ayuntamiento.', true); son('error'); return; }
+  let mejor = null, md = 1e9;
+  propias().forEach(function (u) { if (u.k !== k || u.cdHab) return; const d = Math.hypot(u.x - e.x, u.y - e.y); if (d < md) { md = d; mejor = u; } });
+  if (!mejor) { aviso('Nadie la tiene lista todavía.', true); son('error'); return; }
+  const prev = mejor.orden && (mejor.orden.t === 'ganar' || mejor.orden.t === 'vender') ? mejor.orden : null;
+  ordenar(mejor, { t: 'hab', obj: e.id, luego: prev }); son('orden');
+  G.fx.push({ t: 'marca', x: e.x, y: e.y, v: 0, dur: .5, col: '#9B5BC0' });
+}
 function ordenInteligente(sx, sy, atacando) {
-  const us = propias(); if (!us.length) return;
+  const us = propias();
+  if (!us.length) {
+    const b = G.sel.length === 1 ? G.sel[0] : null;
+    if (b && b.eq === 0 && b.d.produce && b.obra >= 1) {
+      const e = entEn(sx, sy), w = mundo(sx, sy);
+      b.rally = e && (esChatarra(e) || e.k === 'plaza') ? { x: centro(e).x, y: centro(e).y, obj: e.id } : { x: w.x, y: w.y };
+      G.fx.push({ t: 'marca', x: b.rally.x, y: b.rally.y, v: 0, dur: .6, col: '#D9A521' }); son('orden');
+      aviso('Punto de reunión fijado.');
+    }
+    return;
+  }
   const e = entEn(sx, sy), w = mundo(sx, sy);
   let n = 0, hecho = false;
   us.forEach(function (u) {
@@ -898,6 +960,7 @@ cv.addEventListener('pointerup', function (ev) {
   if (a.movido) return;
   if (G.modo) {
     if (G.modo.t === 'construir') colocar(p.x, p.y);
+    else if (G.modo.t === 'hab') { lanzarHab(p.x, p.y); G.modo = null; G.firma = '?'; }
     else { ordenInteligente(p.x, p.y, true); G.modo = null; G.firma = '?'; }
     return;
   }
