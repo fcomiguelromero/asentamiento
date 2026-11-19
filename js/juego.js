@@ -1,5 +1,5 @@
 'use strict';
-/* Asentamiento — lógica del juego (v0.5) */
+/* Asentamiento — lógica del juego (v0.6) */
 const N = 48;
 
 const DEF = {
@@ -292,7 +292,8 @@ function enemigoCerca(u, r) {
 function danar(e, d, autor) {
   if (e.hp <= 0) return;
   e.hp -= d; e.flash = .12;
-  if (e.eq === 0 && G.alertaT <= 0) { G.alertaT = 12; aviso('¡Nos atacan!', true); son('alerta'); }
+  if (e.eq === 0) { const c0 = centro(e); G.ultAlerta = { x: c0.x, y: c0.y, t: G.t }; }
+  if (e.eq === 0 && G.alertaT <= 0) { G.alertaT = 12; aviso('¡Nos atacan! (Espacio para ir)', true); son('alerta'); }
   if (seVe(e)) son('golpe');
   if (e.hp <= 0) { matar(e); return; }
   if (autor && e.d.tipo === 'u' && e.d.dano && e.orden.t === 'idle') e.orden = { t: 'atacar', obj: autor.id, luego: { t: 'idle' } };
@@ -337,7 +338,18 @@ function ciclo(u, dt, o, dinero) {
       if (!m) { u.orden = { t: 'idle' }; if (dinero) aviso('No quedan plazas con turistas.', true); return; }
       o.obj = m.id; u.ruta = null;
     }
-    if (distE(u, m) <= .8) { u.fase = 'pica'; u.tt = dinero ? 4 : 3; u.ruta = null; mirar(u, m); return; }
+    if (distE(u, m) <= .8) {
+      if (!dinero && ocupantes(m, u) >= 2) {
+        u.espera = (u.espera || 0) + dt; mirar(u, m);
+        if (u.espera > 1.5) {
+          u.espera = 0;
+          const otro = masCercano(u, function (e) { return esChatarra(e) && e !== m && ocupantes(e, u) < 2 && Math.hypot(centro(e).x - m.x, centro(e).y - m.y) < 7; }, 9);
+          if (otro) { o.obj = otro.id; u.ruta = null; }
+        }
+        return;
+      }
+      u.espera = 0; u.fase = 'pica'; u.tt = dinero ? 4 : 3; u.ruta = null; mirar(u, m); return;
+    }
     if (!u.ruta || !u.ruta.length) { if (!irAEnt(u, m)) { u.orden = { t: 'idle' }; return; } }
     avanzar(u, dt);
   } else if (u.fase === 'pica') {
@@ -363,6 +375,7 @@ function ciclo(u, dt, o, dinero) {
     avanzar(u, dt);
   }
 }
+function ocupantes(m, yo) { let n = 0; for (const e of G.ents) if (e !== yo && e.k === 'chatarrero' && e.fase === 'pica' && e.orden.obj === m.id && e.orden.t === 'recoger') n++; return n; }
 function enCiudad(x, y) { return x >= 30 && y <= 17 && x < N && y >= 0; }
 function destinoVenta(o) {
   for (let i = 0; i < 14; i++) {
@@ -725,6 +738,10 @@ function pintarMinimapa() {
     mx.fillRect(px - s / 2, py - s / 2, s, s);
   }
   const k = MS / 32;
+  if (G.ultAlerta && G.t - G.ultAlerta.t < 5) {
+    const a = G.ultAlerta, px = (a.x - a.y) * MS + 110, py = (a.x + a.y) * MS * .5 + 3, r = 4 + ((G.t * 2) % 1) * 10;
+    mx.strokeStyle = '#C8321E'; mx.lineWidth = 2; mx.beginPath(); mx.arc(px, py, r, 0, 6.3); mx.stroke();
+  }
   mx.strokeStyle = '#2A1E14'; mx.lineWidth = 1.5;
   mx.strokeRect(G.cam.x * k + 110, G.cam.y * k + 3, W * k, H * k);
 }
@@ -751,6 +768,9 @@ function acciones() {
       } });
     });
     r.push({ nombre: 'Parar', sub: 'Quietos ahí', tecla: 'S', fn: function () { us.forEach(function (u) { ordenar(u, { t: 'idle' }); }); } });
+  } else if (G.sel.length === 1 && G.sel[0].eq === 0 && G.sel[0].d.tipo === 'e' && G.sel[0].obra < 1) {
+    const b = G.sel[0];
+    r.push({ nombre: 'Cancelar obra', sub: 'Recuperas el 75 %', tecla: 'X', fn: function () { cancelarObra(b); } });
   } else if (G.sel.length === 1 && G.sel[0].eq === 0 && G.sel[0].d.tipo === 'e' && G.sel[0].obra >= 1) {
     const b = G.sel[0];
     (b.d.produce || []).forEach(function (k) {
@@ -765,7 +785,21 @@ function acciones() {
       r.push({ nombre: 'Mejorar a ' + nv.nombre, sub: textoCoste(nv.coste), tecla: 'M', fn: function () { mejorar(b); } });
     }
   }
+  if (G.sel.length === 1 && G.sel[0].eq === 0 && G.sel[0].cola && G.sel[0].cola.length && G.sel[0].obra >= 1) {
+    const b = G.sel[0];
+    r.push({ nombre: 'Cancelar', sub: 'Quita el último encargo', tecla: 'X', fn: function () { cancelarCola(b); } });
+  }
   return r;
+}
+function devolver(c, f) { G.dinero += Math.floor((c.d || 0) * f); G.chatarra += Math.floor((c.c || 0) * f); }
+function cancelarObra(b) {
+  devolver(b.d.coste, .75); matarSinRuinas(b); G.sel = []; son('orden'); aviso('Obra cancelada.'); G.firma = '?';
+}
+function matarSinRuinas(b) { b.obra = 0; matar(b); }
+function cancelarCola(b) {
+  const it = b.cola.pop(); if (!it) return;
+  devolver(it.k === 'mejora' ? (b.k === 'principal' ? NIVEL_CASA : NIVEL)[(b.nivel || 0) + 1].coste : DEF[it.k].coste, 1);
+  son('orden'); G.firma = '?';
 }
 function encolar(b, k) {
   const c = DEF[k].coste;
@@ -937,6 +971,7 @@ cv.addEventListener('pointerdown', function (ev) {
     if (G.modo) { G.modo = null; G.firma = '?'; return; }
     ordenInteligente(p.x, p.y, false); return;
   }
+  if (ev.pointerType === 'mouse' && ev.button === 1) { ev.preventDefault(); try { cv.setPointerCapture(ev.pointerId); } catch (e) { } G.arrastre = { x0: p.x, y0: p.y, cx: G.cam.x, cy: G.cam.y, caja: false, movido: true, tactil: true, camara: true }; return; }
   if (ev.button !== 0) return;
   try { cv.setPointerCapture(ev.pointerId); } catch (e) { }
   G.arrastre = { x0: p.x, y0: p.y, cx: G.cam.x, cy: G.cam.y, caja: false, movido: false, tactil: ev.pointerType !== 'mouse', mayus: ev.shiftKey };
@@ -950,7 +985,7 @@ cv.addEventListener('pointermove', function (ev) {
 cv.addEventListener('pointerleave', function () { raton.dentro = false; });
 cv.addEventListener('pointerup', function (ev) {
   if (!G) return;
-  const a = G.arrastre; G.arrastre = null; if (!a) return;
+  const a = G.arrastre; G.arrastre = null; if (!a || a.camara) return;
   const p = pos(ev);
   if (a.caja) {
     const x0 = Math.min(a.x0, p.x), x1 = Math.max(a.x0, p.x), y0 = Math.min(a.y0, p.y), y1 = Math.max(a.y0, p.y);
@@ -993,10 +1028,30 @@ window.addEventListener('keydown', function (ev) {
   if (!G || G.fin || !document.getElementById('inicio').classList.contains('oculto')) return;
   if (ev.key.indexOf('Arrow') === 0 || ev.key === ' ') ev.preventDefault();
   if (ev.key === 'Escape') { if (G.modo) G.modo = null; else G.sel = []; G.firma = '?'; refrescarPanel(false); return; }
-  if (ev.key === ' ') { const b = G.ents.find(function (e) { return e.k === 'principal' && e.eq === 0; }); if (b) centrar(b.x + 1.5, b.y + 1.5); return; }
-  if (/^[1-9]$/.test(ev.key)) {
-    if (ev.ctrlKey || ev.metaKey) { G.grupos[ev.key] = propias().map(function (e) { return e.id; }); ev.preventDefault(); aviso('Grupo ' + ev.key + ' guardado.'); }
-    else if (G.grupos[ev.key]) seleccionar(G.grupos[ev.key].map(ent).filter(Boolean), false);
+  if (ev.key === ' ') {
+    if (G.ultAlerta && G.t - G.ultAlerta.t < 10 && !G.yaAlerta) { centrar(G.ultAlerta.x, G.ultAlerta.y); G.yaAlerta = true; return; }
+    G.yaAlerta = false; const b = G.ents.find(function (e) { return e.k === 'principal' && e.eq === 0; }); if (b) centrar(b.x + 1.5, b.y + 1.5); return;
+  }
+  if (ev.key === 'F1') {
+    ev.preventDefault();
+    const ociosos = G.ents.filter(function (e) { return e.eq === 0 && (e.k === 'chatarrero' || e.k === 'echadora' || e.k === 'romero') && e.orden.t === 'idle'; });
+    if (!ociosos.length) { aviso('No hay trabajadores parados.'); return; }
+    if (ev.ctrlKey || ev.shiftKey) { seleccionar(ociosos, false); return; }
+    G.ociosoI = ((G.ociosoI || 0) + 1) % ociosos.length; const u = ociosos[G.ociosoI]; seleccionar([u], false); centrar(u.x, u.y); return;
+  }
+  if (ev.key === 'F2') {
+    ev.preventDefault();
+    seleccionar(G.ents.filter(function (e) { return e.eq === 0 && e.d.tipo === 'u' && e.d.dano && e.k !== 'chatarrero'; }), false); return;
+  }
+  if (/^Digit[1-9]$/.test(ev.code)) {
+    const n = ev.code.slice(5);
+    if (ev.ctrlKey || ev.metaKey) { G.grupos[n] = propias().map(function (e) { return e.id; }); ev.preventDefault(); aviso('Grupo ' + n + ' guardado.'); }
+    else if (ev.shiftKey) { const g = G.grupos[n] || []; propias().forEach(function (e) { if (g.indexOf(e.id) < 0) g.push(e.id); }); G.grupos[n] = g; aviso('Añadidos al grupo ' + n + '.'); }
+    else if (G.grupos[n]) {
+      const l = G.grupos[n].map(ent).filter(Boolean), ahora = performance.now();
+      if (G.ultGrupo && G.ultGrupo.n === n && ahora - G.ultGrupo.t < 350 && l.length) centrar(l[0].x, l[0].y);
+      G.ultGrupo = { n: n, t: ahora }; seleccionar(l, false);
+    }
     return;
   }
   if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
