@@ -8,7 +8,7 @@ Hecho con HTML, CSS y JavaScript sobre canvas, sin librerías. Todos los gráfic
 
 Abre `index.html` en el navegador, o la versión publicada en GitHub Pages.
 
-## Versión 0.8
+## Versión 0.9
 
 - Unidades: chatarrero, echadora de la buenaventura, vendedora de romero y navajero.
 - Edificios: Casa del Patriarca, chabola (cartón, uralita y ladrillo), chatarrería y Taberna El Pincho.

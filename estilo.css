@@ -43,10 +43,10 @@ button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--tint
 #info .cola span { background: var(--papel2); border: 1.5px solid var(--tinta); padding: 0 7px; }
 #info .prog { height: 9px; width: 120px; background: var(--papel2); border: 2px solid var(--tinta); }
 #info .prog i { display: block; height: 100%; background: var(--ocre); }
-#ordenes { flex: none; width: 348px; display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 58px; gap: 8px; align-content: start; }
+#ordenes { flex: none; width: 420px; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 41px; gap: 5px; align-content: start; }
 #ordenes button { position: relative; padding: 4px 6px; text-align: left; line-height: 1.15; overflow: hidden; }
-#ordenes button b { display: block; font-family: var(--rotulo); font-weight: normal; font-size: 16px; }
-#ordenes button small { display: block; font-size: 11px; color: #4A3A2A; margin-top: 1px; }
+#ordenes button b { display: block; font-family: var(--rotulo); font-weight: normal; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ordenes button small { display: block; font-size: 10.5px; color: #4A3A2A; margin-top: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #ordenes button kbd { position: absolute; right: 4px; bottom: 2px; font: bold 11px monospace; color: var(--rojo); }
 #ordenes button.act { background: var(--ocre); }
 
@@ -74,7 +74,7 @@ button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--tint
   #panel { height: 132px; gap: 8px; padding: 10px 8px 8px; }
   #minimapa { width: 132px; height: 70px; }
   #info, #retrato { display: none !important; }
-  #ordenes { flex: 1; width: auto; grid-auto-rows: 52px; }
+  #ordenes { flex: 1; width: auto; grid-auto-rows: 36px; gap: 4px; }
   .rec em { display: none; }
   #barra { gap: 10px; padding: 0 8px; }
   #reloj { display: none; }
@@ -93,3 +93,7 @@ button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--tint
 .ayuda-cartel dd { margin: 0; color: #4A3A2A; }
 #b-cerrar-ayuda { display: block; margin: 16px auto 0; font-family: var(--rotulo); font-size: 20px; background: var(--oliva); color: var(--papel); }
 @media (max-width: 760px) { #b-ayuda { display: none; } }
+
+.ic.luz { background: #FFF1B8; border-radius: 50% 50% 40% 40%; box-shadow: inset 0 -4px 0 #8E979E; }
+.rec.apagon b { color: var(--rojo); }
+#info p.aviso-luz { color: var(--rojo); font-weight: bold; }

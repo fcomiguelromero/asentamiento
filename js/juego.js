@@ -1,5 +1,5 @@
 'use strict';
-/* Asentamiento — lógica del juego (v0.8) */
+/* Asentamiento — lógica del juego (v0.9) */
 const N = 48;
 
 const DEF = {
@@ -8,14 +8,21 @@ const DEF = {
   navajero: { nombre: 'Navajero', tipo: 'u', hp: 90, vel: 2.9, dano: 10, cad: .8, alc: .9, vista: 6, coste: { d: 60, c: 20 }, t: 11, tecla: 'N', desc: 'Defiende el asentamiento cuerpo a cuerpo.' },
   romero: { hab: { id: 'ramito', nombre: 'Ramito', tecla: 'G', cd: 25, alc: 3, dur: 7, desc: 'Regala un ramito de la suerte a un enemigo: se queda 7 segundos sin atacar.' }, nombre: 'Vendedora de romero', tipo: 'u', hp: 35, vel: 2.3, dano: 0, vista: 5, coste: { d: 70 }, t: 11, tecla: 'R', desc: 'Vende ramitos por las calles de la ciudad. Da poco dinero, pero no se agota. La policía no se mete con ella.' },
   chatarreria: { nombre: 'Chatarrería', tipo: 'e', tam: 3, hp: 260, vista: 4, coste: { c: 80 }, t: 26, tecla: 'H', desc: 'Los chatarreros también descargan aquí. Constrúyela junto a montones lejanos.' },
+  manitas: { nombre: 'El Manitas', tipo: 'u', hp: 45, vel: 2.7, dano: 3, cad: 1, alc: .9, vista: 6, coste: { d: 75 }, t: 12, tecla: 'Y', desc: 'Pincha la luz en las farolas (enganches) y repara el doble de rápido que un chatarrero.' },
+  vespa: { hab: { id: 'acel', nombre: 'Acelerón', tecla: 'V', cd: 15, dur: 4, propia: true, desc: 'Gas a fondo: el doble de velocidad durante 4 segundos.' }, nombre: 'Vespa trucada', tipo: 'u', vehiculo: true, hp: 75, vel: 4.6, dano: 7, cad: .6, alc: 1, vista: 7, pop: 2, coste: { c: 50, d: 100 }, t: 18, tecla: 'V', desc: 'Hostigadora rápida: entra, pega y sale pitando.' },
+  fragoneta: { nombre: 'La Fragoneta', tipo: 'u', vehiculo: true, hp: 220, vel: 3.1, dano: 0, vista: 6, pop: 3, carga: 8, coste: { c: 120, d: 80 }, t: 22, tecla: 'F', desc: 'Lleva hasta ocho personas (clic derecho sobre ella para subir) y los chatarreros pueden descargar en ella.' },
+  enganche: { nombre: 'Enganche', tipo: 'e', tam: 1, hp: 90, vista: 3, coste: { c: 30, d: 20 }, t: 10, tecla: 'L', desc: 'Luz pinchada de una farola. Da 6 de luz e ilumina 7 casillas alrededor: la taberna, el taller y el bibliobús sólo funcionan dentro.' },
+  taller: { nombre: 'Taller del Rizos', tipo: 'e', tam: 3, hp: 420, vista: 4, coste: { c: 150, d: 80 }, t: 40, tecla: 'K', luz: 3, requiere: 'taberna', produce: ['vespa', 'fragoneta'], desc: 'Aquí se apañan la Vespa trucada y la Fragoneta.' },
+  bibliobus: { nombre: 'Bibliobús robado', tipo: 'e', tam: 2, hp: 260, vista: 4, coste: { c: 100, d: 60 }, t: 30, tecla: 'I', luz: 2, desc: 'Un bibliobús que nadie echó de menos. Aquí se investigan mejoras.' },
+  tecnico: { nombre: 'Técnico de la eléctrica', tipo: 'u', hp: 50, vel: 2.4, dano: 25, cad: 2, alc: .9, vista: 6, soloEng: true, desc: 'Viene a cortar los enganches. A todo lo demás apenas le hace nada.' },
   pillastre: { nombre: 'Pillastres', tipo: 'u', hp: 30, vel: 3.7, dano: 4, cad: .55, alc: .8, vista: 6, pop: .5, pareja: true, coste: { d: 50 }, t: 10, tecla: 'B', desc: 'Banda de golfillos en chándal: salen de dos en dos, rápidos y flojos. Ideales para rodear.' },
   antidisturbios: { nombre: 'Antidisturbios', tipo: 'u', hp: 170, vel: 1.9, dano: 9, cad: 1.2, alc: .9, vista: 6, arm: 3, desc: 'Escudo y casco: cada golpe que recibe le hace 3 puntos menos. Rodéalo con muchos golpes pequeños… o mejor, con golpes grandes.' },
   policia: { nombre: 'Policía local', tipo: 'u', hp: 55, vel: 2.5, dano: 6, cad: .9, alc: .9, vista: 6, desc: 'Viene a desalojar, porra en mano.' },
   inspector: { nombre: 'Inspector de Urbanismo', tipo: 'u', hp: 40, vel: 2.2, dano: 6, cad: 1.6, alc: 4.5, vista: 7, proy: true, desc: 'Lanza multas a distancia. Duelen.' },
-  principal: { nombre: 'Casa del Patriarca', tipo: 'e', tam: 3, hp: 700, pop: 6, vista: 8, produce: ['chatarrero', 'echadora', 'romero'], desc: 'El corazón del asentamiento. Aquí se descarga la chatarra y el dinero.' },
+  principal: { nombre: 'Casa del Patriarca', tipo: 'e', tam: 3, hp: 700, pop: 6, vista: 8, produce: ['chatarrero', 'echadora', 'romero', 'manitas'], desc: 'El corazón del asentamiento. Aquí se descarga la chatarra y el dinero.' },
   chabola: { nombre: 'Chabola', tipo: 'e', tam: 2, hp: 180, vista: 4, coste: { c: 50 }, t: 18, tecla: 'C', desc: 'Da sitio para más gente.' },
   plantacion: { nombre: 'Plantación de romero', tipo: 'e', tam: 2, hp: 160, vista: 4, coste: { c: 40, d: 60 }, t: 22, tecla: 'P', desc: 'Cada plantación (hasta dos) sube un 25 % lo que cobra la vendedora y mejora su Ramito: dura más y se recarga antes.' },
-  taberna: { nombre: 'Taberna El Pincho', tipo: 'e', tam: 2, hp: 300, vista: 4, coste: { c: 90, d: 30 }, t: 30, tecla: 'T', produce: ['navajero', 'pillastre'], desc: 'Entre caña y caña, aquí se curten los navajeros y se junta la banda de los Pillastres.' },
+  taberna: { nombre: 'Taberna El Pincho', tipo: 'e', tam: 2, hp: 300, vista: 4, coste: { c: 90, d: 30 }, t: 30, tecla: 'T', luz: 2, produce: ['navajero', 'pillastre'], desc: 'Entre caña y caña, aquí se curten los navajeros y se junta la banda de los Pillastres.' },
   ayuntamiento: { nombre: 'Ayuntamiento', tipo: 'e', tam: 4, hp: 1100, vista: 8, desc: 'De aquí salen las patrullas. Derríbalo para ganar.' },
   bloque: { nombre: 'Bloque de pisos', tipo: 'd', tam: 3, hp: 1 },
   contenedor: { nombre: 'Contenedor de basura', tipo: 'r', tam: 1, hp: 1, desc: 'Siempre hay algo aprovechable. Manda aquí a los chatarreros.' },
@@ -35,7 +42,25 @@ const DIF = {
   chivato: { primera: 70, intervalo: 55, base: 3, crece: 85, guardias: 5, insp: 1, anti: 3, chivato: true, nombre: 'Con chivato', lema: 'Con chivato: el Ayuntamiento lo ve todo y ataca siempre tu punto más débil.' }
 };
 const PLAZAS = [{ x: 24, y: 24, cant: 500, nom: 'Plaza de la fuente' }, { x: 37, y: 30, cant: 900, nom: 'Plaza del mercado' }, { x: 26, y: 6, cant: 1400, nom: 'Plaza de la catedral' }];
-const VENTA_ROMERO = 12;
+const VENTA_ROMERO = 12, RADIO_LUZ = 7;
+const INV = {
+  navajas: { nombre: 'Navajas afiladas', coste: { c: 100, d: 100 }, t: 40, tecla: 'N', desc: '+3 de daño a navajeros, +1 a pillastres y +2 a las Vespas.' },
+  cuero: { nombre: 'Chaquetas de cuero', coste: { c: 100, d: 75 }, t: 40, tecla: 'U', desc: '+1 de armadura a toda tu gente a pie.' },
+  motor: { nombre: 'Carrito con motor', coste: { c: 75, d: 50 }, t: 30, tecla: 'M', desc: 'Los chatarreros cargan 7 en vez de 5.' },
+  baraja: { nombre: 'Baraja marcada', coste: { d: 100 }, t: 30, tecla: 'B', desc: 'Las echadoras sacan un 30 % más por lectura.' },
+  cables: { nombre: 'Empalme de cables', coste: { c: 50, d: 50 }, t: 30, tecla: 'E', desc: 'Cada enganche da 9 de luz en vez de 6.' },
+  chapuzas: { nombre: 'Manual de chapuzas', coste: { c: 50 }, t: 25, tecla: 'Z', desc: 'Se repara el doble de rápido y con la mitad de chatarra.' }
+};
+function inv(k) { return G.inv && G.inv[k]; }
+function danoDe(u) { let d = u.d.dano; if (u.eq === 0 && inv('navajas')) d += u.k === 'navajero' ? 3 : u.k === 'pillastre' ? 1 : u.k === 'vespa' ? 2 : 0; return d; }
+function luzTotal() { let n = 0; for (const e of G.ents) if (e.eq === 0 && e.k === 'enganche' && e.obra >= 1) n++; return n * (inv('cables') ? 9 : 6); }
+function luzUso() { let n = 0; for (const e of G.ents) if (e.eq === 0 && e.d.luz && e.obra >= 1) n += e.d.luz; return n; }
+function enZonaLuz(x, y, soloTerminados) { for (const e of G.ents) if (e.eq === 0 && e.k === 'enganche' && (!soloTerminados || e.obra >= 1) && Math.hypot(e.x + .5 - x, e.y + .5 - y) <= RADIO_LUZ) return true; return false; }
+function conLuz(b) { const c = centro(b); return enZonaLuz(c.x, c.y, true); }
+function farolaLibre(x, y) {
+  for (const d of G.deco) if (d.k === 'farola' && !d.enganche && Math.hypot(d.x - x, d.y - y) < 1.7) return d;
+  return null;
+}
 function plantaciones() { let n = 0; for (const e of G.ents) if (e.eq === 0 && e.k === 'plantacion' && e.obra >= 1) n++; return Math.min(2, n); }
 function nombreDe(e) { return e.nom || e.d.nombre; }
 function esChatarra(e) { return (e.k === 'monton' || e.k === 'contenedor') && !e.muerto; }
@@ -198,7 +223,7 @@ function irAEnt(u, e) {
 }
 function avanzar(u, dt) {
   if (!u.ruta || !u.ruta.length) return true;
-  let paso = u.d.vel * (u.lento > 0 ? .5 : 1) * dt;
+  let paso = u.d.vel * (u.lento > 0 ? .5 : 1) * (u.acel > 0 ? 2 : 1) * dt;
   u.anda = true;
   while (paso > 0 && u.ruta.length) {
     const p = u.ruta[0], dx = p[0] - u.x, dy = p[1] - u.y, d = Math.hypot(dx, dy);
@@ -222,7 +247,7 @@ function nuevaPartida(dif) {
   G = {
     dif: DIF[dif], t: 0, ents: [], porId: new Map(), id: 1, dinero: 150, chatarra: 60, sel: [], cam: { x: 0, y: 0 },
     tiles: new Uint8Array(N * N), bloq: new Uint8Array(N * N), expl: new Uint8Array(N * N), vis: new Uint8Array(N * N),
-    fx: [], ruinas: [], fin: null, modo: null, ia: { t: DIF[dif].primera, ola: 0, tg: 0, tr: 0 }, grupos: {}, alertaT: 0, visT: 0, uiT: 0, firma: '', arrastre: null
+    fx: [], ruinas: [], inv: {}, luzTot: 0, luzUso: 0, fin: null, modo: null, ia: { t: DIF[dif].primera, ola: 0, tg: 0, tr: 0 }, grupos: {}, alertaT: 0, visT: 0, uiT: 0, firma: '', arrastre: null
   };
   const rnd = mulberry(7);
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
@@ -254,7 +279,7 @@ function nuevaPartida(dif) {
   const dec = function (k, x, y, v) { G.deco.push({ k: k, x: x, y: y, v: v || 0, id: G.deco.length + 1, dir: rnd() > .5 ? 1 : -1, deco: true }); };
   [2, 6, 10, 14].forEach(function (y) { dec('farola', 30.5, y + .5); });
   [33, 37, 41, 45].forEach(function (x) { dec('farola', x + .5, 17.5); });
-  [[37.2, 10.5], [42.6, 10.5]].forEach(function (q) { dec('farola', q[0], q[1]); });
+  [[37.2, 10.5], [42.6, 10.5], [14.4, 34.4], [20.6, 29.4], [26.6, 23.4], [6.4, 30.4]].forEach(function (q) { dec('farola', q[0], q[1]); });
   [[36.6, 4.4], [42.4, 4.4], [36.6, 8.6], [42.4, 8.6], [30.5, 8.5], [30.5, 12.5], [39.5, 17.5]].forEach(function (q) { dec('arbol', q[0], q[1]); });
   [[38.5, 10.6], [41.5, 10.6]].forEach(function (q) { dec('banco', q[0], q[1]); });
   dec('bidon', 11.6, 40.6);
@@ -288,7 +313,7 @@ function ajustarCam() {
 
 /* ---------- Recursos y población ---------- */
 function popMax() { let p = 0; for (const e of G.ents) if (e.eq === 0 && e.d.tipo === 'e' && e.obra >= 1) p += e.k === 'chabola' ? NIVEL[e.nivel || 0].pop : e.k === 'principal' ? NIVEL_CASA[e.nivel || 0].pop : (e.d.pop || 0); return Math.min(POP_TOPE, p); }
-function popUso() { let p = 0; for (const e of G.ents) { if (e.eq !== 0) continue; if (e.d.tipo === 'u') p += e.d.pop || 1; else if (e.cola) for (const it of e.cola) if (it.k !== 'mejora') p++; } return Math.ceil(p); }
+function popUso() { let p = 0; for (const e of G.ents) { if (e.eq !== 0) continue; if (e.d.tipo === 'u') { p += e.d.pop || 1; if (e.dentro) for (const x of e.dentro) p += x.d.pop || 1; } else if (e.cola) for (const it of e.cola) if (it.k !== 'mejora' && it.k !== 'inv') p += DEF[it.k].pop || 1; } return Math.ceil(p); }
 function puede(c) { return G.dinero >= (c.d || 0) && G.chatarra >= (c.c || 0); }
 function pagar(c) { G.dinero -= c.d || 0; G.chatarra -= c.c || 0; }
 function falta(c) { aviso(G.dinero < (c.d || 0) ? 'No hay dinero suficiente.' : 'No hay chatarra suficiente.', true); son('error'); }
@@ -305,7 +330,9 @@ function enemigoCerca(u, r) {
 }
 function danar(e, d, autor) {
   if (e.hp <= 0) return;
-  if (e.d.arm) d = Math.max(1, d - e.d.arm);
+  if (autor && autor.d && autor.d.soloEng && e.k !== 'enganche') d = 1;
+  const arm = (e.d.arm || 0) + (e.eq === 0 && e.d.tipo === 'u' && !e.d.vehiculo && inv('cuero') ? 1 : 0);
+  if (arm) d = Math.max(1, d - arm);
   e.hp -= d; e.flash = .12;
   if (e.eq === 0) { const c0 = centro(e); G.ultAlerta = { x: c0.x, y: c0.y, t: G.t }; }
   if (e.eq === 0 && G.alertaT <= 0) { G.alertaT = 12; aviso('¡Nos atacan! (Espacio para ir)', true); son('alerta'); }
@@ -314,6 +341,8 @@ function danar(e, d, autor) {
   if (autor && e.d.tipo === 'u' && e.d.dano && e.orden.t === 'idle') e.orden = { t: 'atacar', obj: autor.id, luego: { t: 'idle' } };
 }
 function matar(e) {
+  if (e.dentro && e.dentro.length) descargar(e);
+  if (e.farola) e.farola.enganche = null;
   e.hp = 0; e.muerto = true;
   if (e.d.tam) bloquear(e, 0);
   const c = centro(e);
@@ -370,16 +399,16 @@ function ciclo(u, dt, o, dinero) {
   } else if (u.fase === 'pica') {
     u.trabaja = true; u.tt -= dt;
     if (u.tt <= 0) {
-      if (dinero) { const m = ent(o.obj); if (m && m.cant > 0) { const q = Math.min(CARGA_DINERO, m.cant); m.cant -= q; u.carga = q; if (m.cant <= 0) { aviso('Los turistas de la ' + nombreDe(m).toLowerCase() + ' se han ido.', true); G.firma = '?'; } } }
+      if (dinero) { const m = ent(o.obj); if (m && m.cant > 0) { const q = Math.min(Math.round(CARGA_DINERO * (inv('baraja') ? 1.3 : 1)), m.cant); m.cant -= q; u.carga = q; if (m.cant <= 0) { aviso('Los turistas de la ' + nombreDe(m).toLowerCase() + ' se han ido.', true); G.firma = '?'; } } }
       else {
         const m = ent(o.obj);
-        if (m && !m.muerto) { const q = Math.min(CARGA_CHATARRA, m.cant); m.cant -= q; u.carga = q; if (m.cant <= 0) matar(m); }
+        if (m && !m.muerto) { const q = Math.min(CARGA_CHATARRA + (inv('motor') ? 2 : 0), m.cant); m.cant -= q; u.carga = q; if (m.cant <= 0) matar(m); }
         if (enVista(u)) son('chatarra');
       }
       u.fase = u.carga > 0 ? 'volver' : 'ir'; u.ruta = null;
     }
   } else {
-    const b = masCercano(u, function (e) { return (e.k === 'principal' || (!dinero && e.k === 'chatarreria')) && e.eq === u.eq && e.obra >= 1 && !e.muerto; });
+    const b = masCercano(u, function (e) { return (e.k === 'principal' || (!dinero && (e.k === 'chatarreria' || e.k === 'fragoneta'))) && e.eq === u.eq && (e.obra === undefined || e.obra >= 1) && !e.muerto; });
     if (!b) { u.orden = { t: 'idle' }; return; }
     if (distE(u, b) <= .8) {
       if (dinero) { G.dinero += u.carga; son('moneda'); } else G.chatarra += u.carga;
@@ -403,12 +432,12 @@ function enVista(u) { const p = enPantalla(u.x, u.y); return p.x > 0 && p.x < W 
 
 function updU(u, dt) {
   u.anda = false; u.trabaja = false; u.cd = Math.max(0, u.cd - dt); u.pensar -= dt; u.golpeT = Math.max(0, u.golpeT - dt);
-  u.cdHab = Math.max(0, (u.cdHab || 0) - dt); u.lento = Math.max(0, (u.lento || 0) - dt); u.calmado = Math.max(0, (u.calmado || 0) - dt);
+  u.cdHab = Math.max(0, (u.cdHab || 0) - dt); u.lento = Math.max(0, (u.lento || 0) - dt); u.acel = Math.max(0, (u.acel || 0) - dt); u.calmado = Math.max(0, (u.calmado || 0) - dt);
   if (u.calmado > 0) { u.ruta = null; return; }
   const o = u.orden;
   switch (o.t) {
     case 'idle':
-      if (u.d.dano && u.k !== 'chatarrero' && u.pensar <= 0) {
+      if (u.d.dano && u.k !== 'chatarrero' && u.k !== 'manitas' && !u.d.soloEng && u.pensar <= 0) {
         u.pensar = .35;
         const en = enemigoCerca(u, u.d.vista);
         if (en) u.orden = { t: 'atacar', obj: en.id, luego: { t: 'idle' } };
@@ -434,8 +463,8 @@ function updU(u, dt) {
         u.ruta = null; mirar(u, e);
         if (u.cd <= 0) {
           u.cd = u.d.cad * (u.lento > 0 ? 2 : 1); u.golpeT = .22;
-          if (u.d.proy) G.fx.push({ t: 'multa', x: u.x, y: u.y, obj: e.id, dano: u.d.dano, autor: u.id, v: 0, dur: 9 });
-          else danar(e, u.d.dano, u);
+          if (u.d.proy) G.fx.push({ t: 'multa', x: u.x, y: u.y, obj: e.id, dano: danoDe(u), autor: u.id, v: 0, dur: 9 });
+          else danar(e, danoDe(u), u);
         }
       } else {
         u.tt = (u.tt || 0) - dt;
@@ -489,13 +518,28 @@ function updU(u, dt) {
     }
     case 'recoger': ciclo(u, dt, o, false); break;
     case 'ganar': ciclo(u, dt, o, true); break;
+    case 'subir': {
+      const f = ent(o.obj);
+      if (!f || f.muerto) { u.orden = { t: 'idle' }; break; }
+      if (Math.hypot(f.x - u.x, f.y - u.y) < 1.3) {
+        f.dentro = f.dentro || [];
+        if (f.dentro.length >= f.d.carga) { aviso('La Fragoneta va llena.', true); u.orden = { t: 'idle' }; break; }
+        u.orden = { t: 'idle' }; u.ruta = null; f.dentro.push(u);
+        G.ents.splice(G.ents.indexOf(u), 1); G.porId.delete(u.id); const i = G.sel.indexOf(u); if (i >= 0) G.sel.splice(i, 1);
+        son('sel'); G.firma = '?'; return;
+      }
+      u.tt = (u.tt || 0) - dt;
+      if (!u.ruta || !u.ruta.length || u.tt <= 0) { u.tt = .6; if (!irA(u, f.x, f.y)) { u.orden = { t: 'idle' }; break; } }
+      avanzar(u, dt);
+      break;
+    }
     case 'reparar': {
       const b = ent(o.obj);
       if (!b || b.muerto || b.hp >= b.hpMax) { u.orden = { t: 'idle' }; break; }
       if (distE(u, b) <= .8) {
         u.trabaja = true; u.ruta = null; mirar(u, b);
-        const hp = Math.min(b.hpMax - b.hp, dt * b.hpMax / 30);
-        const coste = hp / 8;
+        const hp = Math.min(b.hpMax - b.hp, dt * b.hpMax / 30 * (u.k === 'manitas' ? 2 : 1) * (inv('chapuzas') ? 2 : 1));
+        const coste = hp / 8 / (inv('chapuzas') ? 2 : 1);
         if (G.chatarra < coste) { aviso('No queda chatarra para reparar.', true); u.orden = { t: 'idle' }; break; }
         G.chatarra -= coste; b.hp += hp;
         if (b.hp >= b.hpMax) { b.hp = b.hpMax; u.orden = { t: 'idle' }; }
@@ -510,7 +554,7 @@ function updU(u, dt) {
       if (!b || b.muerto || b.obra >= 1) { u.orden = { t: 'idle' }; break; }
       if (distE(u, b) <= .8) {
         u.trabaja = true; u.ruta = null; mirar(u, b);
-        let nb = 0; for (const x of G.ents) if (x.k === 'chatarrero' && x.orden.t === 'construir' && x.orden.obj === b.id && distE(x, b) <= .8) nb++;
+        let nb = 0; for (const x of G.ents) if ((x.k === 'chatarrero' || x.k === 'manitas') && x.orden.t === 'construir' && x.orden.obj === b.id && distE(x, b) <= .8) nb++;
         const f = 1 / Math.sqrt(Math.max(1, nb));
         b.obra = Math.min(1, b.obra + dt * f / b.d.t);
         b.hp = Math.min(b.hpMax, b.hp + dt * f / b.d.t * b.hpMax * .9);
@@ -526,14 +570,18 @@ function updU(u, dt) {
 function updE(b, dt) {
   if (b.flash) b.flash = Math.max(0, b.flash - dt);
   if (b.obra < 1 || !b.cola || !b.cola.length) return;
+  b.sinLuz = !!(b.d.luz && !conLuz(b));
+  if (b.sinLuz) return;
+  const apagon = b.d.luz && G.luzUso > G.luzTot;
   const casa = b.k === 'principal', lineas = casa && b.nivel >= 2 && b.cola[0].k !== 'mejora' ? 2 : 1, ritmo = casa && b.nivel >= 1 ? 1.25 : 1;
   for (let i = 0; i < Math.min(lineas, b.cola.length); i++) {
     if (i > 0 && b.cola[i].k === 'mejora') break;
-    b.cola[i].p += dt * ritmo / b.cola[i].t;
+    b.cola[i].p += dt * ritmo * (apagon ? .5 : 1) / b.cola[i].t;
   }
   for (let i = Math.min(lineas, b.cola.length) - 1; i >= 0; i--) if (b.cola[i].p >= 1) { const it = b.cola.splice(i, 1)[0]; terminarItem(b, it); }
 }
 function terminarItem(b, it) {
+  if (it.k === 'inv') { G.inv[it.id] = 1; aviso('Investigación terminada: ' + INV[it.id].nombre + '.'); son('listo'); G.firma = '?'; return; }
   {
     if (it.k === 'mejora') {
       const T = b.k === 'principal' ? NIVEL_CASA : NIVEL;
@@ -558,6 +606,16 @@ function terminarItem(b, it) {
     }
     G.firma = '?';
   }
+}
+function descargar(f) {
+  if (!f.dentro || !f.dentro.length) return;
+  let i = 0;
+  for (let r = 1; r < 4 && f.dentro.length; r++) for (let dy = -r; dy <= r && f.dentro.length; dy++) for (let dx = -r; dx <= r && f.dentro.length; dx++) {
+    const x = Math.floor(f.x) + dx, y = Math.floor(f.y) + dy;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || !libre(x, y) || !paso(Math.floor(f.x), Math.floor(f.y), x, y)) continue;
+    const u = f.dentro.shift(); u.x = x + .5; u.y = y + .5; u.orden = { t: 'idle' }; u.ruta = null; G.ents.push(u); G.porId.set(u.id, u); i++;
+  }
+  if (i) { son('orden'); G.firma = '?'; }
 }
 function salir(b, k, hacia) {
   const cs = anillo(b); if (!cs.length) return null;
@@ -599,12 +657,17 @@ function ia(dt) {
     for (let i = 0; i < n; i++) crearEnemigo((i % 4 === 3 && I.ola >= D.anti) ? 'antidisturbios' : (i % 3 === 2 && I.ola >= D.insp) ? 'inspector' : 'policia', false);
     aviso(D.chivato ? 'Un chivato ha dado el soplo: la patrulla va a por tu punto débil.' : 'El Ayuntamiento envía una patrulla de desalojo.', true); son('alerta');
     I.objetivo = D.chivato ? puntoDebil() : null;
+    if (I.ola >= 2 && G.ents.some(function (e) { return e.eq === 0 && e.k === 'enganche'; })) {
+      for (let i = 0; i < (D.base >= 3 ? 2 : 1); i++) { const tc = crearEnemigo('tecnico', false); if (tc) tc.tecnico = true; }
+      aviso('Viene un técnico de la eléctrica a cortar la luz.', true);
+    }
     I.tr = 0;
   }
   if (I.tr <= 0) {
     I.tr = 2;
     for (const u of G.ents) {
       if (u.eq !== 1 || u.d.tipo !== 'u' || u.guardia || u.orden.t !== 'idle') continue;
+      if (u.tecnico) { const en = masCercano(u, function (e) { return e.eq === 0 && e.k === 'enganche' && !e.muerto; }); if (en) { u.orden = { t: 'atacar', obj: en.id }; continue; } }
       const obj = (I.objetivo && !I.objetivo.muerto) ? I.objetivo : masCercano(u, function (e) { return e.eq === 0 && !e.muerto && e.k !== 'echadora' && e.k !== 'romero'; });
       if (obj) { const c = centro(obj); ordenar(u, { t: 'amover', x: c.x, y: c.y }); if (u.orden.t === 'idle' && obj.d.tam) { u.orden = { t: 'atacar', obj: obj.id }; } }
     }
@@ -660,6 +723,7 @@ function actualizar(dt) {
   }
   ia(dt);
   actualizarPalomas(dt);
+  G.luzTot = luzTotal(); G.luzUso = luzUso();
   for (const q of G.peat) {
     q.compro = Math.max(0, q.compro - dt); q.anda = false;
     if (q.parado > 0) { q.parado -= dt; continue; }
@@ -724,6 +788,12 @@ function pintar() {
   }
   // colocación de edificio
   if (G.modo && G.modo.t === 'construir' && raton.dentro) {
+    if (DEF[G.modo.k].luz || G.modo.k === 'enganche') {
+      cx.save(); cx.setLineDash([6, 6]); cx.lineWidth = 2;
+      for (const e of G.ents) if (e.eq === 0 && e.k === 'enganche') { const q = iso(e.x + .5, e.y + .5); elip(cx, q[0], q[1], RADIO_LUZ * 45.25, RADIO_LUZ * 22.6, 'rgba(242,209,107,.13)', '#D9A521'); }
+      if (G.modo.k === 'enganche') for (const d of G.deco) if (d.k === 'farola' && !d.enganche && G.expl[Math.floor(d.y) * N + Math.floor(d.x)]) { const q = iso(d.x, d.y); elip(cx, q[0], q[1], 22, 11, 'rgba(242,209,107,.3)', '#D9A521'); }
+      cx.restore();
+    }
     const p = casilla(G.modo.k, raton.x, raton.y), ok = valido(G.modo.k, p.x, p.y);
     cx.save(); cx.translate(0, -(G.alt[p.y * N + p.x] === 1 ? ALTO : 0)); dibRombo(cx, p.x, p.y, DEF[G.modo.k].tam, ok ? '#7BD45A' : '#E24B4A', 3, ok ? 'rgba(123,212,90,.3)' : 'rgba(226,75,74,.3)'); cx.restore();
   }
@@ -757,6 +827,7 @@ function pintar() {
       if (e.flash > 0) cx.translate(-2, 0);
       cx.globalAlpha = 1;
       const bas = iso(e.x + e.d.tam, e.y + e.d.tam), top = [bas[0], bas[1]], alto = hImg ? hImg - 6 : (e.k === 'ayuntamiento' ? 100 : e.k === 'principal' ? 80 : 44) + e.d.tam * 32;
+      if (e.d.tipo === 'e' && e.eq === 0 && e.d.luz && e.obra >= 1 && (e.sinLuz || G.luzUso > G.luzTot)) dibSinLuz(cx, top[0], top[1] - alto - 4, t, e.sinLuz);
       if (e.d.tipo === 'e' && !tenue) {
         if (e.obra < 1) dibBarra(top[0], top[1] - alto + 16, 40, e.obra, '#F2D16B');
         else if (e.hp < e.hpMax || sel) dibVida(cx, top[0], top[1] - alto + 16, 12 * e.d.tam + 14, e.hp / e.hpMax, e.eq === 0);
@@ -849,18 +920,24 @@ function acciones() {
   const r = [], us = propias();
   if (us.length) {
     if (us.some(function (u) { return u.k === 'chatarrero'; })) {
-      ['chabola', 'chatarreria', 'taberna', 'plantacion'].forEach(function (k) {
-        r.push({ nombre: DEF[k].nombre.split(' ')[0], sub: textoCoste(DEF[k].coste), tecla: DEF[k].tecla, act: G.modo && G.modo.k === k, fn: function () { G.modo = { t: 'construir', k: k }; G.firma = '?'; } });
+      ['chabola', 'chatarreria', 'taberna', 'plantacion', 'taller', 'bibliobus'].forEach(function (k) {
+        const req = DEF[k].requiere, falta = req && !G.ents.some(function (e) { return e.eq === 0 && e.k === req && e.obra >= 1; });
+        r.push({ nombre: k === 'bibliobus' ? 'Bibliobús' : DEF[k].nombre.split(' ')[0], sub: falta ? 'Requiere ' + DEF[req].nombre.split(' ')[0].toLowerCase() : textoCoste(DEF[k].coste) + (DEF[k].luz ? ' · luz ' + DEF[k].luz : ''), tecla: DEF[k].tecla, act: G.modo && G.modo.k === k, fn: function () {
+          if (falta) { aviso('Primero hace falta una ' + DEF[req].nombre.split(' ')[0].toLowerCase() + '.', true); son('error'); return; }
+          G.modo = { t: 'construir', k: k }; G.firma = '?';
+        } });
       });
     }
-    if (us.some(function (u) { return u.k === 'chatarrero'; })) r.push({ nombre: 'Reparar', sub: '1 chatarra cada 8 de vida', tecla: 'R', act: G.modo && G.modo.t === 'reparar', fn: function () { G.modo = { t: 'reparar' }; G.firma = '?'; } });
+    if (us.some(function (u) { return u.k === 'manitas'; })) r.push({ nombre: 'Enganche', sub: textoCoste(DEF.enganche.coste) + ' · junto a una farola', tecla: 'L', act: G.modo && G.modo.k === 'enganche', fn: function () { G.modo = { t: 'construir', k: 'enganche' }; G.firma = '?'; } });
+    if (us.some(function (u) { return u.k === 'fragoneta' && u.dentro && u.dentro.length; })) r.push({ nombre: 'Descargar', sub: 'Bajan todos', tecla: 'D', fn: function () { us.forEach(function (u) { if (u.k === 'fragoneta') descargar(u); }); } });
+    if (us.some(function (u) { return u.k === 'chatarrero' || u.k === 'manitas'; })) r.push({ nombre: 'Reparar', sub: '1 chatarra cada 8 de vida', tecla: 'R', act: G.modo && G.modo.t === 'reparar', fn: function () { G.modo = { t: 'reparar' }; G.firma = '?'; } });
     if (us.some(function (u) { return u.d.dano; })) r.push({ nombre: 'Atacar', sub: 'Avanza atacando', tecla: 'A', act: G.modo && G.modo.t === 'atacar', fn: function () { G.modo = { t: 'atacar' }; G.firma = '?'; } });
     const vistos = {};
     us.forEach(function (u) {
       const h = u.d.hab; if (!h || vistos[h.id]) return; vistos[h.id] = 1;
       const delTipo = us.filter(function (x) { return x.k === u.k; }), listo = delTipo.some(function (x) { return !x.cdHab; });
       const espera = Math.ceil(Math.min.apply(null, delTipo.map(function (x) { return x.cdHab || 0; })));
-      r.push({ nombre: h.nombre, sub: listo ? 'Al enemigo más cercano' : 'Lista en ' + espera + ' s', tecla: h.tecla, fn: function () {
+      r.push({ nombre: h.nombre, sub: listo ? (h.propia ? h.desc.split(':')[0] : 'Al enemigo más cercano') : 'Lista en ' + espera + ' s', tecla: h.tecla, fn: function () {
         if (!listo) { aviso('Todavía no: lista en ' + espera + ' segundos.', true); son('error'); return; }
         habAuto(u.k);
       } });
@@ -872,7 +949,14 @@ function acciones() {
   } else if (G.sel.length === 1 && G.sel[0].eq === 0 && G.sel[0].d.tipo === 'e' && G.sel[0].obra >= 1) {
     const b = G.sel[0];
     (b.d.produce || []).forEach(function (k) {
-      r.push({ nombre: DEF[k].nombre.split(' ')[0], sub: textoCoste(DEF[k].coste), tecla: DEF[k].tecla, fn: function () { encolar(b, k); } });
+      r.push({ nombre: k === 'manitas' ? 'Manitas' : k === 'vespa' ? 'Vespa' : k === 'fragoneta' ? 'Fragoneta' : DEF[k].nombre.split(' ')[0], sub: textoCoste(DEF[k].coste), tecla: DEF[k].tecla, fn: function () { encolar(b, k); } });
+    });
+    if (b.k === 'bibliobus') Object.keys(INV).forEach(function (k) {
+      if (G.inv[k] || b.cola.some(function (i) { return i.id === k; }) || G.ents.some(function (o) { return o !== b && o.cola && o.cola.some(function (i) { return i.id === k; }); })) return;
+      r.push({ nombre: INV[k].nombre, sub: textoCoste(INV[k].coste), tecla: INV[k].tecla, fn: function () {
+        if (!puede(INV[k].coste)) { falta(INV[k].coste); return; }
+        pagar(INV[k].coste); b.cola.push({ k: 'inv', id: k, p: 0, t: INV[k].t }); son('sel'); G.firma = '?';
+      } });
     });
     if (b.k === 'principal' && (b.nivel || 0) < 2 && !b.cola.some(function (i) { return i.k === 'mejora'; })) {
       const nc = NIVEL_CASA[(b.nivel || 0) + 1];
@@ -896,7 +980,7 @@ function cancelarObra(b) {
 function matarSinRuinas(b) { b.obra = 0; matar(b); }
 function cancelarCola(b) {
   const it = b.cola.pop(); if (!it) return;
-  devolver(it.k === 'mejora' ? (b.k === 'principal' ? NIVEL_CASA : NIVEL)[(b.nivel || 0) + 1].coste : DEF[it.k].coste, 1);
+  devolver(it.k === 'inv' ? INV[it.id].coste : it.k === 'mejora' ? (b.k === 'principal' ? NIVEL_CASA : NIVEL)[(b.nivel || 0) + 1].coste : DEF[it.k].coste, 1);
   son('orden'); G.firma = '?';
 }
 function encolar(b, k) {
@@ -940,6 +1024,7 @@ function refrescarPanel(forzar) {
   document.getElementById('r-din').textContent = Math.floor(G.dinero);
   document.getElementById('r-cha').textContent = Math.floor(G.chatarra);
   document.getElementById('r-pob').textContent = popUso() + '/' + popMax();
+  const rl = document.getElementById('r-luz'); rl.textContent = G.luzUso + '/' + G.luzTot; rl.parentNode.classList.toggle('apagon', G.luzUso > G.luzTot);
   const m = Math.floor(G.t / 60), s = Math.floor(G.t % 60);
   document.getElementById('reloj').textContent = m + ':' + (s < 10 ? '0' : '') + s;
   cv.classList.toggle('apuntar', !!G.modo);
@@ -961,9 +1046,12 @@ function refrescarPanel(forzar) {
     else if (e.k === 'chabola') h += '<p>Sitio para ' + NIVEL[e.nivel || 0].pop + ' personas.</p>';
     if (e.d.desc) h += '<p>' + e.d.desc + '</p>';
     if (e.eq === 0 && e.d.hab) h += '<p><b>' + e.d.hab.nombre + ' (' + e.d.hab.tecla + '):</b> ' + e.d.hab.desc + '</p>';
+    if (e.eq === 0 && e.d.luz && e.obra >= 1) h += e.sinLuz ? '<p class="aviso-luz">Sin luz: necesita un enganche cerca.</p>' : (G.luzUso > G.luzTot ? '<p class="aviso-luz">Apagón: produce a mitad de ritmo. Haz más enganches.</p>' : '');
+    if (e.k === 'fragoneta') h += '<p>Dentro: ' + (e.dentro ? e.dentro.length : 0) + ' de ' + e.d.carga + '.</p>';
+    if (e.k === 'bibliobus') { const hechas = Object.keys(INV).filter(function (k) { return G.inv[k]; }).map(function (k) { return INV[k].nombre; }); h += '<p>Investigado: ' + (hechas.length ? hechas.join(', ') : 'nada todavía') + '.</p>'; }
     if (e.eq === 0 && e.d.produce) h += '<p>Clic derecho en el mapa: punto de reunión.</p>';
     if (e.eq === 0 && e.cola && e.cola.length) {
-      h += '<div class="cola"><div class="prog"><i style="width:' + Math.floor(e.cola[0].p * 100) + '%"></i></div>' + e.cola.map(function (it) { return '<span>' + (it.k === 'mejora' ? 'Mejora' : DEF[it.k].nombre.split(' ')[0]) + '</span>'; }).join('') + '</div>';
+      h += '<div class="cola"><div class="prog"><i style="width:' + Math.floor(e.cola[0].p * 100) + '%"></i></div>' + e.cola.map(function (it) { return '<span>' + (it.k === 'mejora' ? 'Mejora' : it.k === 'inv' ? INV[it.id].nombre.split(' ')[0] : DEF[it.k].nombre.split(' ')[0]) + '</span>'; }).join('') + '</div>';
     }
   } else {
     const n = {}; G.sel.forEach(function (e) { n[e.d.nombre] = (n[e.d.nombre] || 0) + 1; });
@@ -998,21 +1086,25 @@ function valido(k, tx, ty) {
   for (let j = 0; j < t; j++) for (let i = 0; i < t; i++) {
     const x = tx + i, y = ty + j;
     const tp = G.tiles[y * N + x];
-    if (!libre(x, y) || !G.expl[y * N + x] || tp === 2 || tp === 3 || tp === 5 || G.alt[y * N + x] !== G.alt[ty * N + tx]) return false;
+    if (!libre(x, y) || !G.expl[y * N + x] || ((tp === 2 || tp === 3) && k !== 'enganche') || tp === 5 || G.alt[y * N + x] !== G.alt[ty * N + tx]) return false;
   }
+  if (k === 'enganche') return !!farolaLibre(tx + .5, ty + .5);
+  if (DEF[k].luz) return enZonaLuz(tx + t / 2, ty + t / 2, false);
   return true;
 }
 function colocar(sx, sy) {
   const k = G.modo.k, p = casilla(k, sx, sy), c = DEF[k].coste;
-  if (!valido(k, p.x, p.y)) { aviso('Ahí no se puede construir.', true); son('error'); return; }
+  if (!valido(k, p.x, p.y)) { aviso(k === 'enganche' ? 'El enganche tiene que ir junto a una farola libre.' : DEF[k].luz ? 'Tiene que ir dentro de la zona iluminada de un enganche.' : 'Ahí no se puede construir.', true); son('error'); return; }
   if (!puede(c)) { falta(c); return; }
   pagar(c);
   const b = crear(k, p.x, p.y, 0, { obra: 0, nivel: 0 }); b.hp = b.hpMax * .1;
-  propias().forEach(function (u) { if (u.k === 'chatarrero') ordenar(u, { t: 'construir', obj: b.id }); });
+  if (k === 'enganche') { b.farola = farolaLibre(p.x + .5, p.y + .5); b.farola.enganche = b; }
+  propias().forEach(function (u) { if (u.k === (k === 'enganche' ? 'manitas' : 'chatarrero')) ordenar(u, { t: 'construir', obj: b.id }); });
   if (!teclas.Shift) G.modo = null;
   son('orden'); G.firma = '?';
 }
 function habAuto(k) {
+  if (DEF[k].hab && DEF[k].hab.propia) { let n = 0; propias().forEach(function (u) { if (u.k === k && !u.cdHab) { u.acel = u.d.hab.dur; u.cdHab = u.d.hab.cd; n++; } }); if (n) son('hechizo'); return; }
   const usados = new Set(); let n = 0;
   propias().forEach(function (u) {
     if (u.k !== k || u.cdHab) return;
@@ -1051,11 +1143,13 @@ function ordenInteligente(sx, sy, atacando) {
   const e = entEn(sx, sy), w = mundo(sx, sy);
   let n = 0, hecho = false;
   us.forEach(function (u) {
-    if (e && e.eq === 1 && u.d.dano) { ordenar(u, { t: 'atacar', obj: e.id }); hecho = true; }
+    if (e && e.k === 'fragoneta' && e.eq === 0 && e !== u && !u.d.vehiculo) { ordenar(u, { t: 'subir', obj: e.id }); hecho = true; }
+    else if (e && e.eq === 1 && u.d.dano) { ordenar(u, { t: 'atacar', obj: e.id }); hecho = true; }
     else if (e && esChatarra(e) && u.k === 'chatarrero') { ordenar(u, { t: 'recoger', obj: e.id }); hecho = true; }
     else if (u.k === 'romero' && enCiudad(w.x, w.y) && !(e && e.eq === 1)) { ordenar(u, { t: 'vender', x: w.x, y: w.y }); hecho = false; }
     else if (e && e.k === 'plaza' && u.k === 'echadora') { ordenar(u, { t: 'ganar', obj: e.id }); hecho = true; }
-    else if (e && e.eq === 0 && e.d.tipo === 'e' && e.obra >= 1 && e.hp < e.hpMax && u.k === 'chatarrero') { ordenar(u, { t: 'reparar', obj: e.id }); hecho = true; }
+    else if (e && e.eq === 0 && e.d.tipo === 'e' && e.obra < 1 && e.k === 'enganche' && u.k === 'manitas') { ordenar(u, { t: 'construir', obj: e.id }); hecho = true; }
+    else if (e && e.eq === 0 && e.d.tipo === 'e' && e.obra >= 1 && e.hp < e.hpMax && (u.k === 'chatarrero' || u.k === 'manitas')) { ordenar(u, { t: 'reparar', obj: e.id }); hecho = true; }
     else if (e && e.eq === 0 && e.d.tipo === 'e' && e.obra < 1 && u.k === 'chatarrero') { ordenar(u, { t: 'construir', obj: e.id }); hecho = true; }
     else if (e && e.k === 'principal' && e.eq === 0 && u.carga > 0) { ordenar(u, { t: u.k === 'echadora' ? 'ganar' : 'recoger', obj: -1 }); u.fase = 'volver'; hecho = true; }
     else {
@@ -1112,7 +1206,7 @@ cv.addEventListener('pointerup', function (ev) {
     else if (G.modo.t === 'hab') { lanzarHab(p.x, p.y); G.modo = null; G.firma = '?'; }
     else if (G.modo.t === 'reparar') {
       const e = entEn(p.x, p.y);
-      if (e && e.eq === 0 && e.d.tipo === 'e' && e.hp < e.hpMax) { propias().forEach(function (u) { if (u.k === 'chatarrero') ordenar(u, { t: e.obra < 1 ? 'construir' : 'reparar', obj: e.id }); }); son('orden'); }
+      if (e && e.eq === 0 && e.d.tipo === 'e' && e.hp < e.hpMax) { propias().forEach(function (u) { if (u.k === 'chatarrero' || u.k === 'manitas') ordenar(u, { t: e.obra < 1 ? 'construir' : 'reparar', obj: e.id }); }); son('orden'); }
       else { aviso('Elige un edificio tuyo dañado.', true); son('error'); }
       G.modo = null; G.firma = '?';
     }
