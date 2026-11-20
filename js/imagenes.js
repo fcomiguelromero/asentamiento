@@ -60,9 +60,63 @@ function ponerImagen(c, k, x, y, tam, escala) {
   const conf = IMG_CONF[k] || { f: 1, dy: 0 };
   const W = tam * 64 * conf.f * (escala || 1), Hh = W * im.height / im.width;
   const b = iso(x + tam, y + tam);
-  c.drawImage(im, b[0] - W / 2, b[1] - Hh + conf.dy * (escala || 1), W, Hh);
+  const x0 = b[0] - W / 2, y0 = b[1] - Hh + conf.dy * (escala || 1);
+  c.drawImage(im, x0, y0, W, Hh);
+  if (ANIM[k]) ANIM[k](c, x0, y0, W, Hh, performance.now() / 1000, x + y);
   return Hh;
 }
+
+/* Animaciones superpuestas a las ilustraciones (coordenadas en fracciones de la imagen) */
+function humoChimenea(c, x, y, s, t, n) {
+  const ga = c.globalAlpha;
+  for (let i = 0; i < 5; i++) {
+    const f = (t * .35 + i / 5 + n * .17) % 1;
+    c.globalAlpha = ga * (1 - f) * .75;
+    c.lineWidth = 1;
+    circ(c, x + (Math.sin(f * 5 + i + n) * 3 + f * 9) * s, y - f * 34 * s, (2.5 + f * 7) * s, '#F3EEE5', 'rgba(90,80,70,.35)');
+  }
+  c.globalAlpha = ga;
+}
+const CHORROS = [[.34, .22, .25, .52], [.39, .28, .32, .65], [.61, .28, .68, .65], [.66, .22, .76, .52]];
+const ANIM = {
+  'casa-patriarca': function (c, x, y, w, h, t, n) { humoChimenea(c, x + w * .745, y + h * .075, w / 200, t, n); },
+  'chabola-uralita': function (c, x, y, w, h, t, n) { humoChimenea(c, x + w * .75, y + h * .1, w / 140, t, n); },
+  'fuente': function (c, x, y, w, h, t) {
+    const ga = c.globalAlpha;
+    c.lineCap = 'round';
+    // agua que cae por los chorros
+    CHORROS.forEach(function (q, i) {
+      const ax = x + q[0] * w, ay = y + q[1] * h, bx = x + q[2] * w, by = y + q[3] * h;
+      const cxp = ax + (bx - ax) * .35 + (q[0] < .5 ? -1 : 1) * w * .04, cyp = ay - h * .04;
+      c.beginPath(); c.moveTo(ax, ay); c.quadraticCurveTo(cxp, cyp, bx, by);
+      c.setLineDash([w * .025, w * .05]); c.lineDashOffset = -t * w * .35 - i * 7;
+      c.lineWidth = Math.max(1.2, w * .018); c.strokeStyle = 'rgba(255,255,255,.75)'; c.stroke();
+      c.setLineDash([]);
+      // salpicaduras y ondas donde cae
+      for (let j = 0; j < 2; j++) {
+        const f = (t * .9 + j * .5 + i * .23) % 1;
+        c.globalAlpha = ga * (1 - f) * .8; c.lineWidth = 1;
+        elip(c, bx, by + h * .005, w * (.015 + f * .07), h * (.006 + f * .025), null, '#FFFFFF');
+        circ(c, bx + Math.cos(i + j * 3 + f * 2) * w * .03 * f, by - Math.sin(f * 3.14) * h * .045, Math.max(.8, w * .006), '#FFFFFF', false);
+        c.globalAlpha = ga;
+      }
+    });
+    // surtidor de arriba
+    for (let j = 0; j < 6; j++) {
+      const f = (t * 1.2 + j / 6) % 1, lado = j % 2 ? 1 : -1;
+      c.globalAlpha = ga * (1 - f * .6);
+      circ(c, x + w * (.5 + lado * f * .09), y + h * (.12 - Math.sin(f * 3.14) * .07 + f * .08), Math.max(.8, w * .008), '#FFFFFF', false);
+      c.globalAlpha = ga;
+    }
+    // brillos en el pilón
+    for (let j = 0; j < 4; j++) {
+      const f = (t * .4 + j / 4) % 1;
+      c.globalAlpha = ga * Math.sin(f * 3.14) * .6; c.lineWidth = 1.2;
+      linea(c, [x + w * (.2 + j * .17), y + h * (.6 + (j % 2) * .07)], [x + w * (.24 + j * .17), y + h * (.6 + (j % 2) * .07)], '#FFFFFF');
+      c.globalAlpha = ga;
+    }
+  }
+};
 
 function dibAndamio(c, e, alto) {
   const t = e.d.tam, x0 = e.x + .12, y0 = e.y + .12, x1 = e.x + t - .12, y1 = e.y + t - .12;
@@ -186,6 +240,12 @@ function dibRuinas(c, r, t) {
   c.globalAlpha = (1 - f) * .7; circ(c, p[0], p[1] - 10 - f * 20, 20 * tm * (.6 + f), '#E4DCCD', false); c.globalAlpha = 1;
 }
 
+function rectEdificio(e) {
+  const tm = e.d.tam, b = iso(e.x + tm, e.y + tm), k = claveImagen(e), im = IMG[k];
+  if (im) { const conf = IMG_CONF[k] || { f: 1, dy: 0 }, w = tm * 64 * conf.f, h = w * im.height / im.width; return [b[0] - w / 2, b[1] - h + conf.dy, w, h]; }
+  const alto = (e.k === 'ayuntamiento' ? 100 : e.k === 'bloque' ? e.alto : 40) + tm * 32;
+  return [b[0] - tm * 32, b[1] - alto, tm * 64, alto];
+}
 function pintarRetratoImagen(rx, e) {
   const im = IMG['retrato-' + e.k];
   if (!im) return false;

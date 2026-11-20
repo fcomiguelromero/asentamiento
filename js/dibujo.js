@@ -763,10 +763,10 @@ DIB.inspector = function (c, u, t) {
 };
 
 DIB.turista = function (c, e, t) {
-  const v = e.v || 0, foto = Math.sin(t * .9 + e.id * 2.3) > .93;
+  const v = e.v || 0, foto = !e.anda && !e.compra && Math.sin(t * .9 + e.id * 2.3) > .93;
   const cam = ['#F28C38', '#4FA6C8', '#E8D44A', '#E56B8A'][v % 4];
   persona(c, {
-    t: t + e.id, anda: false, camisa: cam, pant: ['#D8C9A3', '#6E8FA8', '#B8B8A0'][v % 3], corto: true, piel: v % 2 ? '#F0A58C' : '#F3C9A8', zapato: '#B98A52',
+    t: t + e.id, anda: !!e.anda, camisa: cam, pant: ['#D8C9A3', '#6E8FA8', '#B8B8A0'][v % 3], corto: true, piel: v % 2 ? '#F0A58C' : '#F3C9A8', zapato: '#B98A52',
     brazo: foto ? [7, -26] : [6, -19],
     torso: function (c, y) {
       c.lineWidth = 1;

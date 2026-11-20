@@ -1,5 +1,5 @@
 'use strict';
-/* Asentamiento — lógica del juego (v0.6) */
+/* Asentamiento — lógica del juego (v0.7) */
 const N = 48;
 
 const DEF = {
@@ -12,7 +12,7 @@ const DEF = {
   inspector: { nombre: 'Inspector de Urbanismo', tipo: 'u', hp: 40, vel: 2.2, dano: 6, cad: 1.6, alc: 4.5, vista: 7, proy: true, desc: 'Lanza multas a distancia. Duelen.' },
   principal: { nombre: 'Casa del Patriarca', tipo: 'e', tam: 3, hp: 700, pop: 6, vista: 8, produce: ['chatarrero', 'echadora', 'romero'], desc: 'El corazón del asentamiento. Aquí se descarga la chatarra y el dinero.' },
   chabola: { nombre: 'Chabola', tipo: 'e', tam: 2, hp: 180, vista: 4, coste: { c: 50 }, t: 12, tecla: 'C', desc: 'Da sitio para más gente.' },
-  taberna: { nombre: 'Taberna El Pincho', tipo: 'e', tam: 3, hp: 300, vista: 4, coste: { c: 90, d: 30 }, t: 16, tecla: 'T', produce: ['navajero'], desc: 'Entre caña y caña, aquí se curten los navajeros.' },
+  taberna: { nombre: 'Taberna El Pincho', tipo: 'e', tam: 2, hp: 300, vista: 4, coste: { c: 90, d: 30 }, t: 16, tecla: 'T', produce: ['navajero'], desc: 'Entre caña y caña, aquí se curten los navajeros.' },
   ayuntamiento: { nombre: 'Ayuntamiento', tipo: 'e', tam: 4, hp: 1100, vista: 8, desc: 'De aquí salen las patrullas. Derríbalo para ganar.' },
   bloque: { nombre: 'Bloque de pisos', tipo: 'd', tam: 3, hp: 1 },
   contenedor: { nombre: 'Contenedor de basura', tipo: 'r', tam: 1, hp: 1, desc: 'Siempre hay algo aprovechable. Manda aquí a los chatarreros.' },
@@ -30,7 +30,7 @@ const DIF = {
   dificil: { primera: 70, intervalo: 55, base: 3, crece: 85, guardias: 5, insp: 1 }
 };
 const PLAZAS = [{ x: 24, y: 24, cant: 500, nom: 'Plaza de la fuente' }, { x: 37, y: 30, cant: 900, nom: 'Plaza del mercado' }, { x: 26, y: 6, cant: 1400, nom: 'Plaza de la catedral' }];
-const VENTA_ROMERO = 6;
+const VENTA_ROMERO = 12;
 function nombreDe(e) { return e.nom || e.d.nombre; }
 function esChatarra(e) { return (e.k === 'monton' || e.k === 'contenedor') && !e.muerto; }
 const NIVEL_CASA = [{ nombre: 'humilde', pop: 6, hp: 700 }, { nombre: 'ampliada', pop: 10, hp: 1000, coste: { c: 150, d: 100 }, t: 25 }, { nombre: 'señorial', pop: 14, hp: 1400, coste: { c: 250, d: 200 }, t: 35 }];
@@ -223,11 +223,13 @@ function nuevaPartida(dif) {
     let tp = h > 1.35 ? 1 : 0;
     if (x >= 30 && y <= 17) tp = (x === 30 || y === 17) ? 3 : 2;
     for (const q of PLAZAS) if (x >= q.x - 2 && x <= q.x + 3 && y >= q.y - 2 && y <= q.y + 3) tp = 3;
+    if (x >= 38 && x <= 46 && y >= 4 && y <= 12) tp = 3;
     if (x >= 36 && x <= 43 && y >= 3 && y <= 10) tp = 3;
     G.tiles[y * N + x] = tp;
   }
   for (let bx = 31; bx <= 43; bx += 4) for (let by = 1; by <= 13; by += 4) {
     if (bx <= 42 && bx + 2 >= 37 && by <= 9 && by + 2 >= 4) continue;
+    if (bx + 2 >= 38 && bx <= 46 && by + 2 >= 4 && by <= 12) continue;
     crear('bloque', bx, by, 2, { alto: 34 + Math.floor(rnd() * 3) * 13, tono: Math.floor(rnd() * 4) });
   }
   crear('ayuntamiento', 38, 5, 1);
@@ -254,6 +256,9 @@ function nuevaPartida(dif) {
     dec('arbol', X - 1, Y + 3.2); dec('arbol', X + 3.2, Y - 1); dec('banco', X + .2, Y - 1.4); dec('banco', X + 2.8, Y + 3.4); dec('columna', X - 1.3, Y + .2);
     for (let i = 0; i < 8; i++) { const a = i * .785 + .3, r = 1.75 + (i % 3) * .28; dec('turista', X + 1 + Math.cos(a) * r, Y + 1 + Math.sin(a) * r, i + pz.id); const d = G.deco[G.deco.length - 1]; d.dir = Math.cos(a) - Math.sin(a) > 0 ? -1 : 1; d.plaza = pz; d.n = i; }
   });
+  G.peat = []; G.celdasCalle = [];
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if ((enCiudad(x, y) || G.tiles[y * N + x] === 3) && libre(x, y)) G.celdasCalle.push([x, y]);
+  for (let i = 0; i < 16; i++) { const q = G.celdasCalle[Math.floor(rnd() * G.celdasCalle.length)]; G.peat.push({ k: 'turista', deco: true, peaton: true, x: q[0] + .5, y: q[1] + .5, v: i + 3, id: 900 + i, dir: 1, ruta: null, parado: rnd() * 3, compro: 0 }); }
   for (let i = 0; i < 70; i++) { const x = 1 + rnd() * (N - 2), y = 1 + rnd() * (N - 2); if (G.tiles[Math.floor(y) * N + Math.floor(x)] < 2 && libre(Math.floor(x), Math.floor(y)) && Math.hypot(x - 10, y - 38) > 4) dec('matojo', x, y, Math.floor(rnd() * 4)); }
   calcVision();
   centrar(base.x + 1.5, base.y + 1.5);
@@ -429,16 +434,31 @@ function updU(u, dt) {
       }
       break;
     }
-    case 'vender':
-      if (!u.fase) { u.fase = 'ir'; u.ruta = null; }
+    case 'vender': {
+      if (!u.fase) { u.fase = 'ir'; u.ruta = null; u.cliente = null; }
+      let cl = u.cliente;
       if (u.fase === 'ir') {
-        if (!u.ruta) { const d = destinoVenta(o); if (!irA(u, d.x, d.y)) { u.orden = { t: 'idle' }; break; } }
-        if (avanzar(u, dt)) { u.fase = 'pica'; u.tt = 5; u.ruta = null; }
+        if (!cl || cl.compro > 0 || cl.reservado !== u.id) {
+          cl = null; let md = 11;
+          for (const q of G.peat) { if (q.compro > 0 || (q.reservado && q.reservado !== u.id)) continue; const d = Math.hypot(q.x - o.x, q.y - o.y) * .5 + Math.hypot(q.x - u.x, q.y - u.y); if (d < md) { md = d; cl = q; } }
+          if (u.cliente && u.cliente !== cl) u.cliente.reservado = null;
+          u.cliente = cl; if (cl) cl.reservado = u.id; u.ruta = null;
+          if (!cl) { u.tt = (u.tt || 0) - dt; if (u.tt <= 0) { u.tt = 3; const d = destinoVenta(o); irA(u, d.x, d.y); } avanzar(u, dt); break; }
+        }
+        if (Math.hypot(cl.x - u.x, cl.y - u.y) < .9) { u.fase = 'pica'; u.tt = 3; u.ruta = null; cl.parado = 3.6; cl.ruta = null; cl.compra = true; cl.dir = cl.x - cl.y > u.x - u.y ? -1 : 1; mirar(u, { x: cl.x, y: cl.y, d: {} }); break; }
+        u.tt = (u.tt || 0) - dt;
+        if (!u.ruta || !u.ruta.length || u.tt <= 0) { u.tt = .8; if (!irA(u, cl.x, cl.y)) { cl.reservado = null; u.cliente = null; } }
+        avanzar(u, dt);
       } else {
         u.trabaja = true; u.tt -= dt;
-        if (u.tt <= 0) { G.dinero += VENTA_ROMERO; G.fx.push({ t: 'txt', x: u.x, y: u.y, v: 0, dur: 1, txt: '+' + VENTA_ROMERO, col: '#F2D16B' }); if (enVista(u)) son('moneda'); u.fase = 'ir'; u.ruta = null; }
+        if (u.tt <= 0) {
+          G.dinero += VENTA_ROMERO; G.fx.push({ t: 'txt', x: u.x, y: u.y, v: 0, dur: 1, txt: '+' + VENTA_ROMERO, col: '#F2D16B' }); if (enVista(u)) son('moneda');
+          if (cl) { cl.compro = 45; cl.reservado = null; G.fx.push({ t: 'txt', x: cl.x, y: cl.y, v: 0, dur: 1.2, txt: '¡Qué bien huele!', col: '#9FD07A' }); }
+          u.cliente = null; u.fase = 'ir'; u.ruta = null;
+        }
       }
       break;
+    }
     case 'hab': {
       const e = ent(o.obj), h = u.d.hab;
       if (!e || e.muerto || !h) { u.orden = o.luego || { t: 'idle' }; u.fase = null; break; }
@@ -592,6 +612,24 @@ function actualizar(dt) {
     }
   }
   ia(dt);
+  for (const q of G.peat) {
+    q.compro = Math.max(0, q.compro - dt); q.anda = false;
+    if (q.parado > 0) { q.parado -= dt; continue; }
+    q.compra = false;
+    if (!q.ruta || !q.ruta.length) {
+      const d = G.celdasCalle[Math.floor(Math.random() * G.celdasCalle.length)];
+      if (Math.hypot(d[0] - q.x, d[1] - q.y) > 14) { q.parado = .5; continue; }
+      q.ruta = ruta(Math.floor(q.x), Math.floor(q.y), d[0], d[1]); if (!q.ruta) { q.parado = 1; continue; }
+      if (Math.random() < .4) q.parado = 1 + Math.random() * 3;
+      continue;
+    }
+    let paso = 1.25 * dt; q.anda = true;
+    while (paso > 0 && q.ruta.length) {
+      const pt = q.ruta[0], dx = pt[0] - q.x, dy = pt[1] - q.y, d = Math.hypot(dx, dy);
+      if (Math.abs(dx - dy) > .02) q.dir = dx - dy > 0 ? 1 : -1;
+      if (d <= paso) { q.x = pt[0]; q.y = pt[1]; q.ruta.shift(); paso -= d; } else { q.x += dx / d * paso; q.y += dy / d * paso; paso = 0; }
+    }
+  }
   for (const f of G.fx) {
     f.v += dt;
     if (f.t === 'multa') {
@@ -620,7 +658,7 @@ function pintar() {
   cx.save();
   const ox = Math.round(G.cam.x), oy = Math.round(G.cam.y);
   cx.translate(-ox, -oy);
-  const esc = Math.min(2, DPR * Z), TZ = 640;
+  const esc = Math.min(2, DPR * 1.5), TZ = 640;
   for (let j = Math.floor(oy / TZ); j <= Math.floor((oy + H) / TZ); j++) for (let i = Math.floor(ox / TZ); i <= Math.floor((ox + W) / TZ); i++) {
     const x0 = i * TZ, y0 = j * TZ;
     if (x0 + TZ < -N * 32 - 8 || x0 > N * 32 + 8 || y0 + TZ < -8 || y0 > N * 32 + 8) continue;
@@ -646,6 +684,8 @@ function pintar() {
   const lista = [];
   for (const e of G.ents) { if (seVe(e)) { const c = centro(e); e._z = c.x + c.y; lista.push(e); } }
   for (const d of G.deco) { const i = Math.floor(d.y) * N + Math.floor(d.x); if (G.expl[i] && (d.k !== 'turista' || (G.vis[i] && d.n < Math.ceil(8 * d.plaza.cant / d.plaza.cantMax)))) { d._z = d.x + d.y; d._v = G.vis[i]; lista.push(d); } }
+  for (const q of G.peat) { const i = Math.floor(q.y) * N + Math.floor(q.x); if (G.vis[i]) { q._z = q.x + q.y; lista.push(q); } }
+  const unis = []; for (const e of lista) if (!e.deco && !e.d.tam) { const q = iso(e.x, e.y); unis.push([q[0], q[1] - 16, e.x + e.y]); }
   lista.sort(function (a, b) { return a._z - b._z; });
   for (const e of lista) {
     if (e.deco) { const p = iso(e.x, e.y); cx.save(); cx.translate(p[0], p[1]); if (e.dir < 0 && e.k !== 'farola') cx.scale(-1, 1); DIB[e.k](cx, e, t); cx.restore(); continue; }
@@ -653,10 +693,16 @@ function pintar() {
     if (e.d.tam) {
       if (sel) dibRombo(cx, e.x, e.y, e.d.tam, e.eq === 0 ? '#7BD45A' : e.eq === 1 ? '#E24B4A' : '#F2D16B', 3);
       const tenue = e.eq !== 0 && !visible(e);
+      let alfa = 1;
+      if (e.d.tipo !== 'r' && e.k !== 'plaza') {
+        const r = rectEdificio(e), mx0 = r[0] + r[2] * .12, mx1 = r[0] + r[2] * .88;
+        for (const q of unis) if (q[2] < e._z + .3 && q[0] > mx0 && q[0] < mx1 && q[1] > r[1] && q[1] < r[1] + r[3] * .85) { alfa = .38; break; }
+      }
+      cx.globalAlpha = alfa;
       if (e.obra < 1) { dibRombo(cx, e.x + .1, e.y + .1, e.d.tam - .2, '#F2D16B', 2, 'rgba(242,209,107,.15)'); cx.globalAlpha = .35 + .55 * e.obra; }
       if (e.flash > 0) cx.translate(2, 0);
       let hImg = 0;
-      if (IMG[claveImagen(e)]) { cx.globalAlpha = 1; hImg = dibEdificio(cx, e, t); }
+      if (IMG[claveImagen(e)]) { cx.globalAlpha = alfa; hImg = dibEdificio(cx, e, t); }
       else if (e.k === 'contenedor') { const q = iso(e.x + .5, e.y + .5); cx.save(); cx.translate(q[0], q[1] + 4); cx.scale(1.7, 1.7); DIB.contenedor(cx, e, t); cx.restore(); hImg = 40; }
       else DIB[e.k](cx, e, t);
       if (e.flash > 0) cx.translate(-2, 0);
@@ -1039,6 +1085,7 @@ window.addEventListener('keydown', function (ev) {
     if (ev.ctrlKey || ev.shiftKey) { seleccionar(ociosos, false); return; }
     G.ociosoI = ((G.ociosoI || 0) + 1) % ociosos.length; const u = ociosos[G.ociosoI]; seleccionar([u], false); centrar(u.x, u.y); return;
   }
+  if (ev.key === '+' || ev.key === '=' || ev.key === '-') { zoomA(Z * (ev.key === '-' ? 1 / 1.2 : 1.2), window.innerWidth / 2, window.innerHeight / 2); return; }
   if (ev.key === 'F2') {
     ev.preventDefault();
     seleccionar(G.ents.filter(function (e) { return e.eq === 0 && e.d.tipo === 'u' && e.d.dano && e.k !== 'chatarrero'; }), false); return;
@@ -1065,13 +1112,39 @@ window.addEventListener('blur', function () { for (const k in teclas) teclas[k] 
 /* ---------- Arranque ---------- */
 function medir() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
-  Z = window.innerWidth < 760 ? 1 : 1.5;
-  if (G && G.trozos) G.trozos.clear();
+  if (!medir.hecho) { Z = window.innerWidth < 760 ? 1 : 1.5; medir.hecho = true; }
   W = window.innerWidth / Z; H = window.innerHeight / Z;
   cv.width = Math.round(window.innerWidth * DPR); cv.height = Math.round(window.innerHeight * DPR);
   if (G) ajustarCam();
 }
 window.addEventListener('resize', medir);
+const ZMIN = .55, ZMAX = 2.4;
+function zoomA(nz, sx, sy) {
+  if (!G) return;
+  nz = Math.max(ZMIN, Math.min(ZMAX, nz));
+  if (Math.abs(nz - Z) < .001) return;
+  const wb = mundo(sx / Z, sy / Z);
+  Z = nz; W = window.innerWidth / Z; H = window.innerHeight / Z;
+  G.cam.x = (wb.x - wb.y) * 32 - sx / Z; G.cam.y = (wb.x + wb.y) * 16 - sy / Z;
+  ajustarCam();
+}
+cv.addEventListener('wheel', function (ev) {
+  ev.preventDefault();
+  const r = cv.getBoundingClientRect();
+  zoomA(Z * Math.exp(-ev.deltaY * .0015), ev.clientX - r.left, ev.clientY - r.top);
+}, { passive: false });
+const dedos = new Map();
+cv.addEventListener('pointerdown', function (ev) {
+  if (ev.pointerType !== 'touch') return;
+  dedos.set(ev.pointerId, [ev.clientX, ev.clientY]);
+  if (dedos.size === 2 && G) { const p = Array.from(dedos.values()); G.pinza = { d0: Math.hypot(p[0][0] - p[1][0], p[0][1] - p[1][1]), z0: Z }; G.arrastre = null; }
+});
+cv.addEventListener('pointermove', function (ev) {
+  if (!dedos.has(ev.pointerId)) return;
+  dedos.set(ev.pointerId, [ev.clientX, ev.clientY]);
+  if (G && G.pinza && dedos.size === 2) { const p = Array.from(dedos.values()), r = cv.getBoundingClientRect(); zoomA(G.pinza.z0 * Math.hypot(p[0][0] - p[1][0], p[0][1] - p[1][1]) / G.pinza.d0, (p[0][0] + p[1][0]) / 2 - r.left, (p[0][1] + p[1][1]) / 2 - r.top); G.arrastre = null; }
+});
+['pointerup', 'pointercancel'].forEach(function (n) { cv.addEventListener(n, function (ev) { dedos.delete(ev.pointerId); if (G && dedos.size < 2) G.pinza = null; }); });
 medir();
 
 document.getElementById('dif').addEventListener('click', function (ev) {
