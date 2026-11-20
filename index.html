@@ -16,6 +16,7 @@
   <span class="rec"><i class="ic pob"></i><b id="r-pob">0/0</b><em>Población</em></span>
   <span class="hueco"></span>
   <span id="reloj">0:00</span>
+  <button id="b-ayuda" type="button">Ayuda (F10)</button>
   <button id="b-son" type="button">Sonido: sí</button>
 </div>
 
@@ -36,6 +37,8 @@
       <button type="button" data-d="facil">Fácil</button>
       <button type="button" data-d="normal" class="act">Normal</button>
       <button type="button" data-d="dificil">Difícil</button>
+      <button type="button" data-d="subvencion" title="El Ayuntamiento manda patrullas el doble de grandes">Con subvención</button>
+      <button type="button" data-d="chivato" title="El Ayuntamiento lo ve todo y ataca siempre tu punto más débil">Con chivato</button>
     </div>
     <button type="button" id="b-jugar">Jugar</button>
     <ul class="ayuda">
@@ -47,7 +50,43 @@
       <li>Habilidades: pulsa su botón (o su tecla) y luego clic en el enemigo. Con un edificio seleccionado, clic derecho fija el punto de reunión.</li>
       <li>Derriba el Ayuntamiento antes de que desaloje la Casa del Patriarca.</li>
     </ul>
-    <p class="ver">Versión 0.7</p>
+    <p class="ver">Versión 0.8</p>
+  </div>
+</div>
+
+<div id="ayuda" class="capa oculto">
+  <div class="cartel ayuda-cartel">
+    <h2>Órdenes y atajos</h2>
+    <p class="lema">El juego queda en pausa mientras lees esto.</p>
+    <div class="cols">
+      <section><h3>Ratón</h3><dl>
+        <dt>Clic izquierdo</dt><dd>Seleccionar. Arrastra para un recuadro. Doble clic: todas las del mismo tipo en pantalla.</dd>
+        <dt>Clic derecho</dt><dd>Mover, atacar, recoger chatarra, ir a la plaza, vender romero, reparar o construir.</dd>
+        <dt>Clic derecho con un edificio</dt><dd>Punto de reunión de las unidades nuevas.</dd>
+        <dt>Rueda</dt><dd>Zoom. Arrastrando con la rueda pulsada: mover la cámara.</dd>
+        <dt>Minimapa</dt><dd>Clic o arrastre para ir a esa zona.</dd>
+      </dl></section>
+      <section><h3>Teclado</h3><dl>
+        <dt>Flechas</dt><dd>Mover la cámara (también los bordes de la pantalla).</dd>
+        <dt>+ / −</dt><dd>Zoom.</dd>
+        <dt>Espacio</dt><dd>Ir al último ataque; otra vez, a casa.</dd>
+        <dt>Ctrl + 1…9</dt><dd>Guardar grupo. Mayús + número: añadir. Número: seleccionar; dos veces, centrar.</dd>
+        <dt>F1</dt><dd>Siguiente trabajador parado. Ctrl + F1: todos.</dd>
+        <dt>F2</dt><dd>Todo el ejército.</dd>
+        <dt>Esc</dt><dd>Cancelar la orden o la selección.</dd>
+        <dt>F10 o ?</dt><dd>Esta ayuda.</dd>
+      </dl></section>
+      <section><h3>Panel de órdenes</h3><dl>
+        <dt>Chatarrero</dt><dd>C chabola · H chatarrería · T taberna · P plantación · R reparar · S parar</dd>
+        <dt>Casa del Patriarca</dt><dd>Q chatarrero · E echadora · R vendedora · M ampliar</dd>
+        <dt>Taberna</dt><dd>N navajero · B pillastres (salen de dos en dos)</dd>
+        <dt>Echadora</dt><dd>O mal de ojo, al enemigo más cercano</dd>
+        <dt>Vendedora</dt><dd>G ramito de la suerte, al enemigo más cercano</dd>
+        <dt>Ejército</dt><dd>A atacar avanzando · S parar</dd>
+        <dt>Obras y colas</dt><dd>X cancelar (obra: devuelve el 75 %)</dd>
+      </dl></section>
+    </div>
+    <button type="button" id="b-cerrar-ayuda">Volver al juego</button>
   </div>
 </div>
 
@@ -60,6 +99,7 @@
 </div>
 
 <script src="js/dibujo.js"></script>
+<script src="js/relieve.js"></script>
 <script src="js/imagenes.js"></script>
 <script src="js/juego.js"></script>
 </body>

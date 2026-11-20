@@ -1,5 +1,5 @@
 'use strict';
-/* Asentamiento — lógica del juego (v0.7) */
+/* Asentamiento — lógica del juego (v0.8) */
 const N = 48;
 
 const DEF = {
@@ -7,12 +7,15 @@ const DEF = {
   echadora: { hab: { id: 'ojo', nombre: 'Mal de ojo', tecla: 'O', cd: 20, alc: 5, dur: 8, desc: 'Echa mal de ojo a un enemigo: anda y ataca a la mitad de ritmo durante 8 segundos.' }, nombre: 'Echadora de la buenaventura', tipo: 'u', hp: 35, vel: 2.5, dano: 0, vista: 5, coste: { d: 60 }, t: 10, tecla: 'E', desc: 'Va a la plaza, lee el porvenir y vuelve con dinero. La policía no se mete con ella.' },
   navajero: { nombre: 'Navajero', tipo: 'u', hp: 90, vel: 2.9, dano: 10, cad: .8, alc: .9, vista: 6, coste: { d: 60, c: 20 }, t: 11, tecla: 'N', desc: 'Defiende el asentamiento cuerpo a cuerpo.' },
   romero: { hab: { id: 'ramito', nombre: 'Ramito', tecla: 'G', cd: 25, alc: 3, dur: 7, desc: 'Regala un ramito de la suerte a un enemigo: se queda 7 segundos sin atacar.' }, nombre: 'Vendedora de romero', tipo: 'u', hp: 35, vel: 2.3, dano: 0, vista: 5, coste: { d: 70 }, t: 11, tecla: 'R', desc: 'Vende ramitos por las calles de la ciudad. Da poco dinero, pero no se agota. La policía no se mete con ella.' },
-  chatarreria: { nombre: 'Chatarrería', tipo: 'e', tam: 3, hp: 260, vista: 4, coste: { c: 80 }, t: 14, tecla: 'H', desc: 'Los chatarreros también descargan aquí. Constrúyela junto a montones lejanos.' },
+  chatarreria: { nombre: 'Chatarrería', tipo: 'e', tam: 3, hp: 260, vista: 4, coste: { c: 80 }, t: 26, tecla: 'H', desc: 'Los chatarreros también descargan aquí. Constrúyela junto a montones lejanos.' },
+  pillastre: { nombre: 'Pillastres', tipo: 'u', hp: 30, vel: 3.7, dano: 4, cad: .55, alc: .8, vista: 6, pop: .5, pareja: true, coste: { d: 50 }, t: 10, tecla: 'B', desc: 'Banda de golfillos en chándal: salen de dos en dos, rápidos y flojos. Ideales para rodear.' },
+  antidisturbios: { nombre: 'Antidisturbios', tipo: 'u', hp: 170, vel: 1.9, dano: 9, cad: 1.2, alc: .9, vista: 6, arm: 3, desc: 'Escudo y casco: cada golpe que recibe le hace 3 puntos menos. Rodéalo con muchos golpes pequeños… o mejor, con golpes grandes.' },
   policia: { nombre: 'Policía local', tipo: 'u', hp: 55, vel: 2.5, dano: 6, cad: .9, alc: .9, vista: 6, desc: 'Viene a desalojar, porra en mano.' },
   inspector: { nombre: 'Inspector de Urbanismo', tipo: 'u', hp: 40, vel: 2.2, dano: 6, cad: 1.6, alc: 4.5, vista: 7, proy: true, desc: 'Lanza multas a distancia. Duelen.' },
   principal: { nombre: 'Casa del Patriarca', tipo: 'e', tam: 3, hp: 700, pop: 6, vista: 8, produce: ['chatarrero', 'echadora', 'romero'], desc: 'El corazón del asentamiento. Aquí se descarga la chatarra y el dinero.' },
-  chabola: { nombre: 'Chabola', tipo: 'e', tam: 2, hp: 180, vista: 4, coste: { c: 50 }, t: 12, tecla: 'C', desc: 'Da sitio para más gente.' },
-  taberna: { nombre: 'Taberna El Pincho', tipo: 'e', tam: 2, hp: 300, vista: 4, coste: { c: 90, d: 30 }, t: 16, tecla: 'T', produce: ['navajero'], desc: 'Entre caña y caña, aquí se curten los navajeros.' },
+  chabola: { nombre: 'Chabola', tipo: 'e', tam: 2, hp: 180, vista: 4, coste: { c: 50 }, t: 18, tecla: 'C', desc: 'Da sitio para más gente.' },
+  plantacion: { nombre: 'Plantación de romero', tipo: 'e', tam: 2, hp: 160, vista: 4, coste: { c: 40, d: 60 }, t: 22, tecla: 'P', desc: 'Cada plantación (hasta dos) sube un 25 % lo que cobra la vendedora y mejora su Ramito: dura más y se recarga antes.' },
+  taberna: { nombre: 'Taberna El Pincho', tipo: 'e', tam: 2, hp: 300, vista: 4, coste: { c: 90, d: 30 }, t: 30, tecla: 'T', produce: ['navajero', 'pillastre'], desc: 'Entre caña y caña, aquí se curten los navajeros y se junta la banda de los Pillastres.' },
   ayuntamiento: { nombre: 'Ayuntamiento', tipo: 'e', tam: 4, hp: 1100, vista: 8, desc: 'De aquí salen las patrullas. Derríbalo para ganar.' },
   bloque: { nombre: 'Bloque de pisos', tipo: 'd', tam: 3, hp: 1 },
   contenedor: { nombre: 'Contenedor de basura', tipo: 'r', tam: 1, hp: 1, desc: 'Siempre hay algo aprovechable. Manda aquí a los chatarreros.' },
@@ -21,19 +24,22 @@ const DEF = {
 };
 const NIVEL = [
   { nombre: 'cartón', pop: 4, hp: 180 },
-  { nombre: 'uralita', pop: 6, hp: 280, coste: { c: 60 }, t: 8 },
-  { nombre: 'ladrillo', pop: 8, hp: 420, coste: { c: 100, d: 40 }, t: 10 }
+  { nombre: 'uralita', pop: 6, hp: 280, coste: { c: 60 }, t: 15 },
+  { nombre: 'ladrillo', pop: 8, hp: 420, coste: { c: 100, d: 40 }, t: 20 }
 ];
 const DIF = {
-  facil: { primera: 180, intervalo: 100, base: 1, crece: 220, guardias: 2, insp: 3 },
-  normal: { primera: 120, intervalo: 80, base: 2, crece: 150, guardias: 3, insp: 2 },
-  dificil: { primera: 70, intervalo: 55, base: 3, crece: 85, guardias: 5, insp: 1 }
+  facil: { primera: 180, intervalo: 100, base: 1, crece: 220, guardias: 2, insp: 3, anti: 8 },
+  normal: { primera: 120, intervalo: 80, base: 2, crece: 150, guardias: 3, insp: 2, anti: 5 },
+  dificil: { primera: 70, intervalo: 55, base: 3, crece: 85, guardias: 5, insp: 1, anti: 4 },
+  subvencion: { primera: 60, intervalo: 50, base: 4, crece: 70, guardias: 6, insp: 1, anti: 3, nombre: 'Con subvención', lema: 'Con subvención: el Ayuntamiento manda patrullas el doble de grandes.' },
+  chivato: { primera: 70, intervalo: 55, base: 3, crece: 85, guardias: 5, insp: 1, anti: 3, chivato: true, nombre: 'Con chivato', lema: 'Con chivato: el Ayuntamiento lo ve todo y ataca siempre tu punto más débil.' }
 };
 const PLAZAS = [{ x: 24, y: 24, cant: 500, nom: 'Plaza de la fuente' }, { x: 37, y: 30, cant: 900, nom: 'Plaza del mercado' }, { x: 26, y: 6, cant: 1400, nom: 'Plaza de la catedral' }];
 const VENTA_ROMERO = 12;
+function plantaciones() { let n = 0; for (const e of G.ents) if (e.eq === 0 && e.k === 'plantacion' && e.obra >= 1) n++; return Math.min(2, n); }
 function nombreDe(e) { return e.nom || e.d.nombre; }
 function esChatarra(e) { return (e.k === 'monton' || e.k === 'contenedor') && !e.muerto; }
-const NIVEL_CASA = [{ nombre: 'humilde', pop: 6, hp: 700 }, { nombre: 'ampliada', pop: 10, hp: 1000, coste: { c: 150, d: 100 }, t: 25 }, { nombre: 'señorial', pop: 14, hp: 1400, coste: { c: 250, d: 200 }, t: 35 }];
+const NIVEL_CASA = [{ nombre: 'humilde', pop: 6, hp: 700 }, { nombre: 'ampliada', pop: 10, hp: 1000, coste: { c: 150, d: 100 }, t: 40 }, { nombre: 'señorial', pop: 14, hp: 1400, coste: { c: 250, d: 200 }, t: 55 }];
 const POP_TOPE = 40, CARGA_CHATARRA = 5, CARGA_DINERO = 25;
 
 let G = null;
@@ -90,8 +96,9 @@ function distE(u, e) {
 function libre(x, y) { return x >= 0 && y >= 0 && x < N && y < N && !G.bloq[y * N + x]; }
 function bloquear(e, v) { const t = e.d.tam; for (let j = 0; j < t; j++) for (let i = 0; i < t; i++) G.bloq[(e.y + j) * N + e.x + i] = v; }
 function mirar(u, e) { const c = centro(e), s = (c.x - u.x) - (c.y - u.y); if (Math.abs(s) > .05) u.dir = s > 0 ? 1 : -1; }
-function enPantalla(x, y) { return { x: (x - y) * 32 - G.cam.x, y: (x + y) * 16 - G.cam.y }; }
-function mundo(sx, sy) { const a = (sx + G.cam.x) / 32, b = (sy + G.cam.y) / 16; return { x: (a + b) / 2, y: (b - a) / 2 }; }
+function enPantalla(x, y) { return { x: (x - y) * 32 - G.cam.x, y: (x + y) * 16 - G.cam.y - alturaEn(x, y) }; }
+function mundo0(sx, sy) { const a = (sx + G.cam.x) / 32, b = (sy + G.cam.y) / 16; return { x: (a + b) / 2, y: (b - a) / 2 }; }
+function mundo(sx, sy) { const m = mundo0(sx, sy), m2 = mundo0(sx, sy + ALTO); return G.alt && altC(Math.floor(m2.x), Math.floor(m2.y)) === 1 ? m2 : m; }
 function visible(e) { const c = centro(e), i = Math.floor(c.y) * N + Math.floor(c.x); return G.vis[i] === 1; }
 function explorado(e) { const c = centro(e), i = Math.floor(c.y) * N + Math.floor(c.x); return G.expl[i] === 1; }
 function seVe(e) { if (e.eq === 0) return true; return e.d.tam ? explorado(e) : visible(e); }
@@ -133,8 +140,8 @@ function ruta(sx, sy, gx, gy) {
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
       if (!dx && !dy) continue;
       const nx = x + dx, ny = y + dy;
-      if (!libre(nx, ny)) continue;
-      if (dx && dy && (!libre(x + dx, y) || !libre(x, y + dy))) continue;
+      if (!libre(nx, ny) || !paso(x, y, nx, ny)) continue;
+      if (dx && dy && (!libre(x + dx, y) || !libre(x, y + dy) || !paso(x, y, x + dx, y) || !paso(x, y, x, y + dy))) continue;
       const j = ny * N + nx;
       if (AS.cer[j] === sello) continue;
       const ng = AS.g[i] + (dx && dy ? 1.4142 : 1);
@@ -227,6 +234,7 @@ function nuevaPartida(dif) {
     if (x >= 36 && x <= 43 && y >= 3 && y <= 10) tp = 3;
     G.tiles[y * N + x] = tp;
   }
+  generarRelieve(G);
   for (let bx = 31; bx <= 43; bx += 4) for (let by = 1; by <= 13; by += 4) {
     if (bx <= 42 && bx + 2 >= 37 && by <= 9 && by + 2 >= 4) continue;
     if (bx + 2 >= 38 && bx <= 46 && by + 2 >= 4 && by <= 12) continue;
@@ -235,10 +243,10 @@ function nuevaPartida(dif) {
   crear('ayuntamiento', 38, 5, 1);
   [[34, 2], [38, 14], [46, 10], [30, 6], [42, 16], [34, 10], [46, 2]].forEach(function (q) { if (libre(q[0], q[1])) crear('contenedor', q[0], q[1], 2, { cant: 150, cantMax: 150 }); });
   PLAZAS.forEach(function (q) { crear('plaza', q.x, q.y, 2, { cant: q.cant, cantMax: q.cant, nom: q.nom }); });
-  [[15, 34, 300], [16, 37, 300], [14, 41, 300], [5, 31, 400], [19, 43, 400], [20, 31, 500], [16, 22, 500], [33, 33, 500], [39, 26, 500], [9, 14, 500], [26, 12, 400], [44, 40, 600]]
+  [[17, 25, 800], [44, 24, 800], [4, 9, 700], [30, 41, 700], [15, 34, 300], [16, 37, 300], [14, 41, 300], [5, 31, 400], [19, 43, 400], [20, 31, 500], [16, 22, 500], [33, 33, 500], [39, 26, 500], [9, 14, 500], [26, 12, 400], [44, 40, 600]]
     .forEach(function (m) { crear('monton', m[0], m[1], 2, { cant: m[2], cantMax: m[2] }); });
   const base = crear('principal', 8, 37, 0);
-  crear('chatarrero', 11.5, 36.5, 0); crear('chatarrero', 11.5, 37.5, 0); crear('chatarrero', 11.5, 38.5, 0);
+  [35.6, 36.4, 37.2, 38, 38.8].forEach(function (y) { crear('chatarrero', 11.6, y, 0); });
   crear('echadora', 10.5, 35.5, 0);
   for (let i = 0; i < G.dif.guardias; i++) crearEnemigo('policia', true);
   // decorado que no bloquea el paso
@@ -253,6 +261,7 @@ function nuevaPartida(dif) {
   G.ents.filter(function (e) { return e.k === 'plaza'; }).forEach(function (pz) {
     const X = pz.x, Y = pz.y;
     [[X - 1.7, Y - 1.7], [X + 3.7, Y - 1.7], [X - 1.7, Y + 3.7], [X + 3.7, Y + 3.7]].forEach(function (q) { dec('farola', q[0], q[1]); });
+    for (let i = 0; i < 4; i++) { dec('paloma', X + .2 + rnd() * 1.6, Y + 2.4 + rnd() * .8); G.deco[G.deco.length - 1].vuelo = 0; }
     dec('arbol', X - 1, Y + 3.2); dec('arbol', X + 3.2, Y - 1); dec('banco', X + .2, Y - 1.4); dec('banco', X + 2.8, Y + 3.4); dec('columna', X - 1.3, Y + .2);
     for (let i = 0; i < 8; i++) { const a = i * .785 + .3, r = 1.75 + (i % 3) * .28; dec('turista', X + 1 + Math.cos(a) * r, Y + 1 + Math.sin(a) * r, i + pz.id); const d = G.deco[G.deco.length - 1]; d.dir = Math.cos(a) - Math.sin(a) > 0 ? -1 : 1; d.plaza = pz; d.n = i; }
   });
@@ -279,7 +288,7 @@ function ajustarCam() {
 
 /* ---------- Recursos y población ---------- */
 function popMax() { let p = 0; for (const e of G.ents) if (e.eq === 0 && e.d.tipo === 'e' && e.obra >= 1) p += e.k === 'chabola' ? NIVEL[e.nivel || 0].pop : e.k === 'principal' ? NIVEL_CASA[e.nivel || 0].pop : (e.d.pop || 0); return Math.min(POP_TOPE, p); }
-function popUso() { let p = 0; for (const e of G.ents) { if (e.eq !== 0) continue; if (e.d.tipo === 'u') p++; else if (e.cola) for (const it of e.cola) if (it.k !== 'mejora') p++; } return p; }
+function popUso() { let p = 0; for (const e of G.ents) { if (e.eq !== 0) continue; if (e.d.tipo === 'u') p += e.d.pop || 1; else if (e.cola) for (const it of e.cola) if (it.k !== 'mejora') p++; } return Math.ceil(p); }
 function puede(c) { return G.dinero >= (c.d || 0) && G.chatarra >= (c.c || 0); }
 function pagar(c) { G.dinero -= c.d || 0; G.chatarra -= c.c || 0; }
 function falta(c) { aviso(G.dinero < (c.d || 0) ? 'No hay dinero suficiente.' : 'No hay chatarra suficiente.', true); son('error'); }
@@ -296,6 +305,7 @@ function enemigoCerca(u, r) {
 }
 function danar(e, d, autor) {
   if (e.hp <= 0) return;
+  if (e.d.arm) d = Math.max(1, d - e.d.arm);
   e.hp -= d; e.flash = .12;
   if (e.eq === 0) { const c0 = centro(e); G.ultAlerta = { x: c0.x, y: c0.y, t: G.t }; }
   if (e.eq === 0 && G.alertaT <= 0) { G.alertaT = 12; aviso('¡Nos atacan! (Espacio para ir)', true); son('alerta'); }
@@ -452,7 +462,8 @@ function updU(u, dt) {
       } else {
         u.trabaja = true; u.tt -= dt;
         if (u.tt <= 0) {
-          G.dinero += VENTA_ROMERO; G.fx.push({ t: 'txt', x: u.x, y: u.y, v: 0, dur: 1, txt: '+' + VENTA_ROMERO, col: '#F2D16B' }); if (enVista(u)) son('moneda');
+          const venta = Math.round(VENTA_ROMERO * (1 + .25 * plantaciones()));
+          G.dinero += venta; G.fx.push({ t: 'txt', x: u.x, y: u.y, v: 0, dur: 1, txt: '+' + venta, col: '#F2D16B' }); if (enVista(u)) son('moneda');
           if (cl) { cl.compro = 45; cl.reservado = null; G.fx.push({ t: 'txt', x: cl.x, y: cl.y, v: 0, dur: 1.2, txt: '¡Qué bien huele!', col: '#9FD07A' }); }
           u.cliente = null; u.fase = 'ir'; u.ruta = null;
         }
@@ -463,9 +474,10 @@ function updU(u, dt) {
       const e = ent(o.obj), h = u.d.hab;
       if (!e || e.muerto || !h) { u.orden = o.luego || { t: 'idle' }; u.fase = null; break; }
       if (distE(u, e) <= h.alc) {
-        u.ruta = null; mirar(u, e); u.cdHab = h.cd; u.golpeT = .4;
+        const np = h.id === 'ramito' ? plantaciones() : 0;
+        u.ruta = null; mirar(u, e); u.cdHab = h.cd - np * 5; u.golpeT = .4;
         if (h.id === 'ojo') { e.lento = h.dur; G.fx.push({ t: 'txt', x: e.x, y: e.y, v: 0, dur: 1.4, txt: '¡Mal de ojo!', col: '#C9A6E8' }); }
-        else { e.calmado = h.dur; e.ruta = null; G.fx.push({ t: 'txt', x: e.x, y: e.y, v: 0, dur: 1.4, txt: '¡Ramito de la suerte!', col: '#9FD07A' }); }
+        else { e.calmado = h.dur + np * 2; e.ruta = null; G.fx.push({ t: 'txt', x: e.x, y: e.y, v: 0, dur: 1.4, txt: '¡Ramito de la suerte!', col: '#9FD07A' }); }
         G.fx.push({ t: 'rayo', x: u.x, y: u.y, x2: e.x, y2: e.y, v: 0, dur: .5, col: h.id === 'ojo' ? '#9B5BC0' : '#5E8B4A' });
         son('hechizo'); u.orden = o.luego || { t: 'idle' }; u.fase = null; u.ruta = null;
       } else {
@@ -477,13 +489,31 @@ function updU(u, dt) {
     }
     case 'recoger': ciclo(u, dt, o, false); break;
     case 'ganar': ciclo(u, dt, o, true); break;
+    case 'reparar': {
+      const b = ent(o.obj);
+      if (!b || b.muerto || b.hp >= b.hpMax) { u.orden = { t: 'idle' }; break; }
+      if (distE(u, b) <= .8) {
+        u.trabaja = true; u.ruta = null; mirar(u, b);
+        const hp = Math.min(b.hpMax - b.hp, dt * b.hpMax / 30);
+        const coste = hp / 8;
+        if (G.chatarra < coste) { aviso('No queda chatarra para reparar.', true); u.orden = { t: 'idle' }; break; }
+        G.chatarra -= coste; b.hp += hp;
+        if (b.hp >= b.hpMax) { b.hp = b.hpMax; u.orden = { t: 'idle' }; }
+      } else {
+        if (!u.ruta || !u.ruta.length) { if (!irAEnt(u, b)) { u.orden = { t: 'idle' }; break; } }
+        avanzar(u, dt);
+      }
+      break;
+    }
     case 'construir': {
       const b = ent(o.obj);
       if (!b || b.muerto || b.obra >= 1) { u.orden = { t: 'idle' }; break; }
       if (distE(u, b) <= .8) {
         u.trabaja = true; u.ruta = null; mirar(u, b);
-        b.obra = Math.min(1, b.obra + dt / b.d.t);
-        b.hp = Math.min(b.hpMax, b.hp + dt / b.d.t * b.hpMax * .9);
+        let nb = 0; for (const x of G.ents) if (x.k === 'chatarrero' && x.orden.t === 'construir' && x.orden.obj === b.id && distE(x, b) <= .8) nb++;
+        const f = 1 / Math.sqrt(Math.max(1, nb));
+        b.obra = Math.min(1, b.obra + dt * f / b.d.t);
+        b.hp = Math.min(b.hpMax, b.hp + dt * f / b.d.t * b.hpMax * .9);
         if (b.obra >= 1) { son('listo'); aviso(b.d.nombre + ' terminada.'); u.orden = { t: 'idle' }; G.firma = '?'; }
       } else {
         if (!u.ruta || !u.ruta.length) { if (!irAEnt(u, b)) { u.orden = { t: 'idle' }; break; } }
@@ -496,16 +526,22 @@ function updU(u, dt) {
 function updE(b, dt) {
   if (b.flash) b.flash = Math.max(0, b.flash - dt);
   if (b.obra < 1 || !b.cola || !b.cola.length) return;
-  const it = b.cola[0];
-  it.p += dt / it.t;
-  if (it.p >= 1) {
-    b.cola.shift();
+  const casa = b.k === 'principal', lineas = casa && b.nivel >= 2 && b.cola[0].k !== 'mejora' ? 2 : 1, ritmo = casa && b.nivel >= 1 ? 1.25 : 1;
+  for (let i = 0; i < Math.min(lineas, b.cola.length); i++) {
+    if (i > 0 && b.cola[i].k === 'mejora') break;
+    b.cola[i].p += dt * ritmo / b.cola[i].t;
+  }
+  for (let i = Math.min(lineas, b.cola.length) - 1; i >= 0; i--) if (b.cola[i].p >= 1) { const it = b.cola.splice(i, 1)[0]; terminarItem(b, it); }
+}
+function terminarItem(b, it) {
+  {
     if (it.k === 'mejora') {
       const T = b.k === 'principal' ? NIVEL_CASA : NIVEL;
       b.nivel = (b.nivel || 0) + 1; const sube = T[b.nivel].hp - b.hpMax; b.hpMax = T[b.nivel].hp; b.hp = Math.min(b.hpMax, b.hp + Math.max(100, sube));
       aviso(b.k === 'principal' ? 'La Casa del Patriarca ya es ' + T[b.nivel].nombre + '.' : 'Chabola mejorada a ' + T[b.nivel].nombre + '.'); son('listo');
     } else {
       const u = salir(b, it.k);
+      if (u && DEF[it.k].pareja) { const u2 = salir(b, it.k); if (u2) ordenar(u2, b.rally ? { t: 'amover', x: b.rally.x + .4, y: b.rally.y + .4 } : { t: 'idle' }); }
       if (u && b.rally) {
         const R = ent(b.rally.obj);
         if (R && esChatarra(R) && u.k === 'chatarrero') ordenar(u, { t: 'recoger', obj: R.id });
@@ -539,6 +575,16 @@ function crearEnemigo(k, guardia) {
   if (u) u.guardia = !!guardia;
   return u;
 }
+function puntoDebil() {
+  let mejor = null, mv = 1e9;
+  for (const e of G.ents) {
+    if (e.eq !== 0 || e.muerto || (e.d.tipo !== 'e' && e.k !== 'chatarrero')) continue;
+    let def = 0; for (const o of G.ents) if (o.eq === 0 && o.d.tipo === 'u' && o.d.dano && o.k !== 'chatarrero' && Math.hypot(o.x - e.x, o.y - e.y) < 7) def++;
+    const v = def * 100 + e.hp / e.hpMax * 30 + (e.d.tipo === 'e' ? 0 : 20);
+    if (v < mv) { mv = v; mejor = e; }
+  }
+  return mejor;
+}
 function ia(dt) {
   const I = G.ia, D = G.dif;
   I.t -= dt; I.tg -= dt; I.tr -= dt;
@@ -550,15 +596,16 @@ function ia(dt) {
   if (I.t <= 0) {
     I.t = D.intervalo; I.ola++;
     const n = Math.min(12, D.base + Math.floor(G.t / D.crece));
-    for (let i = 0; i < n; i++) crearEnemigo((i % 3 === 2 && I.ola >= D.insp) ? 'inspector' : 'policia', false);
-    aviso('El Ayuntamiento envía una patrulla de desalojo.', true); son('alerta');
+    for (let i = 0; i < n; i++) crearEnemigo((i % 4 === 3 && I.ola >= D.anti) ? 'antidisturbios' : (i % 3 === 2 && I.ola >= D.insp) ? 'inspector' : 'policia', false);
+    aviso(D.chivato ? 'Un chivato ha dado el soplo: la patrulla va a por tu punto débil.' : 'El Ayuntamiento envía una patrulla de desalojo.', true); son('alerta');
+    I.objetivo = D.chivato ? puntoDebil() : null;
     I.tr = 0;
   }
   if (I.tr <= 0) {
     I.tr = 2;
     for (const u of G.ents) {
       if (u.eq !== 1 || u.d.tipo !== 'u' || u.guardia || u.orden.t !== 'idle') continue;
-      const obj = masCercano(u, function (e) { return e.eq === 0 && !e.muerto && e.k !== 'echadora' && e.k !== 'romero'; });
+      const obj = (I.objetivo && !I.objetivo.muerto) ? I.objetivo : masCercano(u, function (e) { return e.eq === 0 && !e.muerto && e.k !== 'echadora' && e.k !== 'romero'; });
       if (obj) { const c = centro(obj); ordenar(u, { t: 'amover', x: c.x, y: c.y }); if (u.orden.t === 'idle' && obj.d.tam) { u.orden = { t: 'atacar', obj: obj.id }; } }
     }
   }
@@ -569,12 +616,12 @@ function calcVision() {
   G.vis.fill(0);
   for (const e of G.ents) {
     if (e.eq !== 0) continue;
-    const c = centro(e), r = e.d.tam && e.obra < 1 ? 2.5 : (e.d.vista || 4), r2 = r * r;
+    const c = centro(e), r = e.d.tam && e.obra < 1 ? 2.5 : (e.d.vista || 4), r2 = r * r, nv = nivelVista(c.x, c.y);
     const x0 = Math.max(0, Math.floor(c.x - r)), x1 = Math.min(N - 1, Math.floor(c.x + r));
     const y0 = Math.max(0, Math.floor(c.y - r)), y1 = Math.min(N - 1, Math.floor(c.y + r));
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
       const dx = x + .5 - c.x, dy = y + .5 - c.y;
-      if (dx * dx + dy * dy <= r2) { G.vis[y * N + x] = 1; G.expl[y * N + x] = 1; }
+      if (dx * dx + dy * dy <= r2 && (nv || G.alt[y * N + x] !== 1)) { G.vis[y * N + x] = 1; G.expl[y * N + x] = 1; }
     }
   }
 }
@@ -607,11 +654,12 @@ function actualizar(dt) {
       if (d < .5) {
         if (d < .001) { dx = Math.cos(a.id); dy = Math.sin(a.id); } else { dx /= d; dy /= d; }
         const nx = a.x + dx * dt * 1.2, ny = a.y + dy * dt * 1.2;
-        if (libre(Math.floor(nx), Math.floor(ny))) { a.x = nx; a.y = ny; }
+        if (libre(Math.floor(nx), Math.floor(ny)) && paso(Math.floor(a.x), Math.floor(a.y), Math.floor(nx), Math.floor(ny))) { a.x = nx; a.y = ny; }
       }
     }
   }
   ia(dt);
+  actualizarPalomas(dt);
   for (const q of G.peat) {
     q.compro = Math.max(0, q.compro - dt); q.anda = false;
     if (q.parado > 0) { q.parado -= dt; continue; }
@@ -677,7 +725,7 @@ function pintar() {
   // colocación de edificio
   if (G.modo && G.modo.t === 'construir' && raton.dentro) {
     const p = casilla(G.modo.k, raton.x, raton.y), ok = valido(G.modo.k, p.x, p.y);
-    dibRombo(cx, p.x, p.y, DEF[G.modo.k].tam, ok ? '#7BD45A' : '#E24B4A', 3, ok ? 'rgba(123,212,90,.3)' : 'rgba(226,75,74,.3)');
+    cx.save(); cx.translate(0, -(G.alt[p.y * N + p.x] === 1 ? ALTO : 0)); dibRombo(cx, p.x, p.y, DEF[G.modo.k].tam, ok ? '#7BD45A' : '#E24B4A', 3, ok ? 'rgba(123,212,90,.3)' : 'rgba(226,75,74,.3)'); cx.restore();
   }
   for (const r of G.ruinas) { const i = Math.floor(r.y + r.tam / 2) * N + Math.floor(r.x + r.tam / 2); if (G.expl[i]) dibRuinas(cx, r, t); }
   // entidades ordenadas por profundidad
@@ -685,10 +733,11 @@ function pintar() {
   for (const e of G.ents) { if (seVe(e)) { const c = centro(e); e._z = c.x + c.y; lista.push(e); } }
   for (const d of G.deco) { const i = Math.floor(d.y) * N + Math.floor(d.x); if (G.expl[i] && (d.k !== 'turista' || (G.vis[i] && d.n < Math.ceil(8 * d.plaza.cant / d.plaza.cantMax)))) { d._z = d.x + d.y; d._v = G.vis[i]; lista.push(d); } }
   for (const q of G.peat) { const i = Math.floor(q.y) * N + Math.floor(q.x); if (G.vis[i]) { q._z = q.x + q.y; lista.push(q); } }
-  const unis = []; for (const e of lista) if (!e.deco && !e.d.tam) { const q = iso(e.x, e.y); unis.push([q[0], q[1] - 16, e.x + e.y]); }
+  const unis = []; for (const e of lista) if (!e.deco && !e.d.tam) { const q = iso(e.x, e.y); unis.push([q[0], q[1] - 16 - alturaEn(e.x, e.y), e.x + e.y]); }
   lista.sort(function (a, b) { return a._z - b._z; });
   for (const e of lista) {
-    if (e.deco) { const p = iso(e.x, e.y); cx.save(); cx.translate(p[0], p[1]); if (e.dir < 0 && e.k !== 'farola') cx.scale(-1, 1); DIB[e.k](cx, e, t); cx.restore(); continue; }
+    if (e.deco) { if (e.oculta) continue; const p = iso(e.x, e.y); cx.save(); cx.translate(p[0], p[1] - alturaEn(e.x, e.y)); if (e.dir < 0 && e.k !== 'farola') cx.scale(-1, 1); DIB[e.k](cx, e, t); cx.restore(); continue; }
+    const cz = centro(e), hz = alturaEn(cz.x, cz.y); cx.save(); cx.translate(0, -hz);
     const sel = G.sel.indexOf(e) >= 0;
     if (e.d.tam) {
       if (sel) dibRombo(cx, e.x, e.y, e.d.tam, e.eq === 0 ? '#7BD45A' : e.eq === 1 ? '#E24B4A' : '#F2D16B', 3);
@@ -704,7 +753,7 @@ function pintar() {
       let hImg = 0;
       if (IMG[claveImagen(e)]) { cx.globalAlpha = alfa; hImg = dibEdificio(cx, e, t); }
       else if (e.k === 'contenedor') { const q = iso(e.x + .5, e.y + .5); cx.save(); cx.translate(q[0], q[1] + 4); cx.scale(1.7, 1.7); DIB.contenedor(cx, e, t); cx.restore(); hImg = 40; }
-      else DIB[e.k](cx, e, t);
+      else (DIB[e.k + (e.k === 'monton' && e.id % 2 ? '2' : '')] || DIB[e.k])(cx, e, t);
       if (e.flash > 0) cx.translate(-2, 0);
       cx.globalAlpha = 1;
       const bas = iso(e.x + e.d.tam, e.y + e.d.tam), top = [bas[0], bas[1]], alto = hImg ? hImg - 6 : (e.k === 'ayuntamiento' ? 100 : e.k === 'principal' ? 80 : 44) + e.d.tam * 32;
@@ -723,18 +772,20 @@ function pintar() {
       if (e.lento > 0) { cx.lineWidth = 1.5; elip(cx, p[0], p[1] - 56, 7, 4, '#F1E6CC'); circ(cx, p[0], p[1] - 56, 2.6, '#7B3FA0'); }
       if (e.calmado > 0) { cx.lineWidth = 2; for (let i = -1; i <= 1; i++) linea(cx, [p[0], p[1] - 50], [p[0] + i * 4, p[1] - 61 - Math.abs(i) * -2], '#5E8B4A'); circ(cx, p[0] + 4, p[1] - 58, 1.6, '#B9A6D6', false); }
     }
+    cx.restore();
   }
   // efectos
   for (const f of G.fx) {
-    const p = iso(f.x, f.y), k = f.v / f.dur;
+    const p = iso(f.x, f.y), k = f.v / f.dur; p[1] -= alturaEn(f.x, f.y);
     if (f.t === 'humo') { cx.globalAlpha = 1 - k; cx.lineWidth = 2; circ(cx, p[0], p[1] - 10 - k * 14, f.r * (.4 + k * .8), '#EDE7DC'); cx.globalAlpha = 1; }
     else if (f.t === 'txt') { cx.globalAlpha = 1 - k * k; cx.font = 'bold 14px sans-serif'; cx.textAlign = 'center'; cx.lineWidth = 3; cx.strokeStyle = TINTA; cx.strokeText(f.txt, p[0], p[1] - 44 - k * 18); cx.fillStyle = f.col; cx.fillText(f.txt, p[0], p[1] - 44 - k * 18); cx.globalAlpha = 1; }
     else if (f.t === 'rayo') { const q = iso(f.x2, f.y2); cx.globalAlpha = 1 - k; cx.lineWidth = 3; cx.setLineDash([4, 5]); cx.beginPath(); cx.moveTo(p[0], p[1] - 22); cx.quadraticCurveTo((p[0] + q[0]) / 2, Math.min(p[1], q[1]) - 60, q[0], q[1] - 24); cx.strokeStyle = f.col; cx.stroke(); cx.setLineDash([]); cx.globalAlpha = 1; }
     else if (f.t === 'marca') { cx.globalAlpha = 1 - k; cx.lineWidth = 2.5; elip(cx, p[0], p[1], 16 * (1 - k * .6), 8 * (1 - k * .6), null, f.col); cx.globalAlpha = 1; }
     else if (f.t === 'multa') { if (G.vis[Math.floor(f.y) * N + Math.floor(f.x)]) dibMulta(cx, p[0], p[1] - 20, f.v * 14); }
   }
-  if (G.sel.length === 1 && G.sel[0].eq === 0 && G.sel[0].rally) { const r = G.sel[0].rally, q = iso(r.x, r.y); dibBanderin(cx, q[0], q[1], t, .9); }
+  if (G.sel.length === 1 && G.sel[0].eq === 0 && G.sel[0].rally) { const r = G.sel[0].rally, q = iso(r.x, r.y); q[1] -= alturaEn(r.x, r.y); dibBanderin(cx, q[0], q[1], t, .9); }
   cx.restore();
+  dibNubes(cx, t, G.cam, W, H);
   // acabado de cartel litográfico: tono cálido, salpicado y viñeta
   cx.globalCompositeOperation = 'multiply'; cx.fillStyle = '#F7EBD2'; cx.fillRect(0, 0, W, H); cx.globalCompositeOperation = 'source-over';
   if (!G.grano) G.grano = cx.createPattern(crearGrano(), 'repeat');
@@ -768,7 +819,7 @@ function dibBarra(x, y, w, f, col) {
 const MS = 220 / (2 * N);
 function pintarMinimapa() {
   mx.fillStyle = PAPEL; mx.fillRect(0, 0, 220, 116);
-  const col = ['#C8A46A', '#A9B36A', '#7C7F86', '#D9CFC0'];
+  const col = ['#C8A46A', '#A9B36A', '#7C7F86', '#D9CFC0', '#A3774A', '#B98E5E', '#D9BE8A'];
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     const i = y * N + x; if (!G.expl[i]) continue;
     mx.globalAlpha = G.vis[i] ? 1 : .55;
@@ -798,19 +849,20 @@ function acciones() {
   const r = [], us = propias();
   if (us.length) {
     if (us.some(function (u) { return u.k === 'chatarrero'; })) {
-      ['chabola', 'chatarreria', 'taberna'].forEach(function (k) {
+      ['chabola', 'chatarreria', 'taberna', 'plantacion'].forEach(function (k) {
         r.push({ nombre: DEF[k].nombre.split(' ')[0], sub: textoCoste(DEF[k].coste), tecla: DEF[k].tecla, act: G.modo && G.modo.k === k, fn: function () { G.modo = { t: 'construir', k: k }; G.firma = '?'; } });
       });
     }
+    if (us.some(function (u) { return u.k === 'chatarrero'; })) r.push({ nombre: 'Reparar', sub: '1 chatarra cada 8 de vida', tecla: 'R', act: G.modo && G.modo.t === 'reparar', fn: function () { G.modo = { t: 'reparar' }; G.firma = '?'; } });
     if (us.some(function (u) { return u.d.dano; })) r.push({ nombre: 'Atacar', sub: 'Avanza atacando', tecla: 'A', act: G.modo && G.modo.t === 'atacar', fn: function () { G.modo = { t: 'atacar' }; G.firma = '?'; } });
     const vistos = {};
     us.forEach(function (u) {
       const h = u.d.hab; if (!h || vistos[h.id]) return; vistos[h.id] = 1;
       const delTipo = us.filter(function (x) { return x.k === u.k; }), listo = delTipo.some(function (x) { return !x.cdHab; });
       const espera = Math.ceil(Math.min.apply(null, delTipo.map(function (x) { return x.cdHab || 0; })));
-      r.push({ nombre: h.nombre, sub: listo ? 'Elige a un enemigo' : 'Lista en ' + espera + ' s', tecla: h.tecla, act: G.modo && G.modo.h === h.id, fn: function () {
+      r.push({ nombre: h.nombre, sub: listo ? 'Al enemigo más cercano' : 'Lista en ' + espera + ' s', tecla: h.tecla, fn: function () {
         if (!listo) { aviso('Todavía no: lista en ' + espera + ' segundos.', true); son('error'); return; }
-        G.modo = { t: 'hab', h: h.id, k: u.k }; G.firma = '?';
+        habAuto(u.k);
       } });
     });
     r.push({ nombre: 'Parar', sub: 'Quietos ahí', tecla: 'S', fn: function () { us.forEach(function (u) { ordenar(u, { t: 'idle' }); }); } });
@@ -903,7 +955,7 @@ function refrescarPanel(forzar) {
     h = '<h2>' + nombreDe(e) + (e.k === 'chabola' ? ' de ' + NIVEL[e.nivel || 0].nombre : '') + '</h2>';
     if (e.d.tipo === 'u' || e.d.tipo === 'e') h += '<div class="vida"><i style="width:' + Math.max(0, 100 * e.hp / e.hpMax) + '%"></i></div>';
     if (esChatarra(e)) h += '<p>Chatarra restante: ' + e.cant + '</p>';
-    if (e.k === 'principal') h += '<p>Casa ' + NIVEL_CASA[e.nivel || 0].nombre + ': sitio para ' + NIVEL_CASA[e.nivel || 0].pop + ' personas.</p>';
+    if (e.k === 'principal') h += '<p>Casa ' + NIVEL_CASA[e.nivel || 0].nombre + ': sitio para ' + NIVEL_CASA[e.nivel || 0].pop + ' personas' + ['.', '; entrena un 25 % más rápido.', '; entrena un 25 % más rápido y en dos líneas a la vez.'][e.nivel || 0] + '</p>';
     if (e.k === 'plaza') h += e.cant > 0 ? '<p>Dinero que aún sueltan los turistas: ' + e.cant + '</p>' : '<p>Los turistas se han ido.</p>';
     if (e.obra < 1) h += '<p>En obras: ' + Math.floor(e.obra * 100) + ' %</p>';
     else if (e.k === 'chabola') h += '<p>Sitio para ' + NIVEL[e.nivel || 0].pop + ' personas.</p>';
@@ -933,7 +985,7 @@ function entEn(sx, sy) {
     if (Math.abs(sx - p.x) < 12 && sy > p.y - 40 && sy < p.y + 7 && (!mejor || e._z > mejor._z)) mejor = e;
   }
   if (mejor) return mejor;
-  const w = [mundo(sx, sy), mundo(sx, sy + 20)];
+  const w = [mundo0(sx, sy), mundo0(sx, sy + 20), mundo0(sx, sy + ALTO), mundo0(sx, sy + 20 + ALTO)];
   for (const e of G.ents) {
     if (!e.d.tam || !seVe(e)) continue;
     for (const q of w) if (q.x >= e.x && q.x < e.x + e.d.tam && q.y >= e.y && q.y < e.y + e.d.tam) { if (!mejor || e._z > mejor._z) mejor = e; }
@@ -945,7 +997,8 @@ function valido(k, tx, ty) {
   const t = DEF[k].tam;
   for (let j = 0; j < t; j++) for (let i = 0; i < t; i++) {
     const x = tx + i, y = ty + j;
-    if (!libre(x, y) || !G.expl[y * N + x] || G.tiles[y * N + x] >= 2) return false;
+    const tp = G.tiles[y * N + x];
+    if (!libre(x, y) || !G.expl[y * N + x] || tp === 2 || tp === 3 || tp === 5 || G.alt[y * N + x] !== G.alt[ty * N + tx]) return false;
   }
   return true;
 }
@@ -958,6 +1011,20 @@ function colocar(sx, sy) {
   propias().forEach(function (u) { if (u.k === 'chatarrero') ordenar(u, { t: 'construir', obj: b.id }); });
   if (!teclas.Shift) G.modo = null;
   son('orden'); G.firma = '?';
+}
+function habAuto(k) {
+  const usados = new Set(); let n = 0;
+  propias().forEach(function (u) {
+    if (u.k !== k || u.cdHab) return;
+    let mejor = null, md = 9;
+    for (const e of G.ents) { if (e.eq !== 1 || e.d.tipo !== 'u' || e.muerto || usados.has(e.id)) continue; const d = Math.hypot(e.x - u.x, e.y - u.y); if (d < md) { md = d; mejor = e; } }
+    if (!mejor) for (const e of G.ents) { if (e.eq !== 1 || e.d.tipo !== 'u' || e.muerto) continue; const d = Math.hypot(e.x - u.x, e.y - u.y); if (d < md) { md = d; mejor = e; } }
+    if (!mejor) return;
+    usados.add(mejor.id); n++;
+    const prev = u.orden && (u.orden.t === 'ganar' || u.orden.t === 'vender') ? u.orden : null;
+    ordenar(u, { t: 'hab', obj: mejor.id, luego: prev });
+  });
+  if (!n) { aviso('No hay enemigos cerca.', true); son('error'); } else son('orden');
 }
 function lanzarHab(sx, sy) {
   const e = entEn(sx, sy), k = G.modo.k;
@@ -988,6 +1055,7 @@ function ordenInteligente(sx, sy, atacando) {
     else if (e && esChatarra(e) && u.k === 'chatarrero') { ordenar(u, { t: 'recoger', obj: e.id }); hecho = true; }
     else if (u.k === 'romero' && enCiudad(w.x, w.y) && !(e && e.eq === 1)) { ordenar(u, { t: 'vender', x: w.x, y: w.y }); hecho = false; }
     else if (e && e.k === 'plaza' && u.k === 'echadora') { ordenar(u, { t: 'ganar', obj: e.id }); hecho = true; }
+    else if (e && e.eq === 0 && e.d.tipo === 'e' && e.obra >= 1 && e.hp < e.hpMax && u.k === 'chatarrero') { ordenar(u, { t: 'reparar', obj: e.id }); hecho = true; }
     else if (e && e.eq === 0 && e.d.tipo === 'e' && e.obra < 1 && u.k === 'chatarrero') { ordenar(u, { t: 'construir', obj: e.id }); hecho = true; }
     else if (e && e.k === 'principal' && e.eq === 0 && u.carga > 0) { ordenar(u, { t: u.k === 'echadora' ? 'ganar' : 'recoger', obj: -1 }); u.fase = 'volver'; hecho = true; }
     else {
@@ -1042,6 +1110,12 @@ cv.addEventListener('pointerup', function (ev) {
   if (G.modo) {
     if (G.modo.t === 'construir') colocar(p.x, p.y);
     else if (G.modo.t === 'hab') { lanzarHab(p.x, p.y); G.modo = null; G.firma = '?'; }
+    else if (G.modo.t === 'reparar') {
+      const e = entEn(p.x, p.y);
+      if (e && e.eq === 0 && e.d.tipo === 'e' && e.hp < e.hpMax) { propias().forEach(function (u) { if (u.k === 'chatarrero') ordenar(u, { t: e.obra < 1 ? 'construir' : 'reparar', obj: e.id }); }); son('orden'); }
+      else { aviso('Elige un edificio tuyo dañado.', true); son('error'); }
+      G.modo = null; G.firma = '?';
+    }
     else { ordenInteligente(p.x, p.y, true); G.modo = null; G.firma = '?'; }
     return;
   }
@@ -1073,6 +1147,7 @@ window.addEventListener('keydown', function (ev) {
   teclas[ev.key] = true;
   if (!G || G.fin || !document.getElementById('inicio').classList.contains('oculto')) return;
   if (ev.key.indexOf('Arrow') === 0 || ev.key === ' ') ev.preventDefault();
+  if (ev.key === 'F10' || ev.key === '?') { ev.preventDefault(); abrirAyuda(); return; }
   if (ev.key === 'Escape') { if (G.modo) G.modo = null; else G.sel = []; G.firma = '?'; refrescarPanel(false); return; }
   if (ev.key === ' ') {
     if (G.ultAlerta && G.t - G.ultAlerta.t < 10 && !G.yaAlerta) { centrar(G.ultAlerta.x, G.ultAlerta.y); G.yaAlerta = true; return; }
@@ -1123,7 +1198,7 @@ function zoomA(nz, sx, sy) {
   if (!G) return;
   nz = Math.max(ZMIN, Math.min(ZMAX, nz));
   if (Math.abs(nz - Z) < .001) return;
-  const wb = mundo(sx / Z, sy / Z);
+  const wb = mundo0(sx / Z, sy / Z);
   Z = nz; W = window.innerWidth / Z; H = window.innerHeight / Z;
   G.cam.x = (wb.x - wb.y) * 32 - sx / Z; G.cam.y = (wb.x + wb.y) * 16 - sy / Z;
   ajustarCam();
@@ -1158,6 +1233,7 @@ function empezar() {
   document.getElementById('inicio').classList.add('oculto');
   document.getElementById('fin').classList.add('oculto');
   nuevaPartida(difElegida);
+  if (G.dif.lema) aviso(G.dif.lema, true);
 }
 document.getElementById('b-jugar').addEventListener('click', empezar);
 document.getElementById('b-otra').addEventListener('click', function () {
@@ -1169,10 +1245,18 @@ document.getElementById('b-son').addEventListener('click', function () {
 });
 
 let ultimo = 0;
+function abrirAyuda() {
+  const a = document.getElementById('ayuda'); if (!a || !G || G.fin === 'demo') return;
+  const abierta = !a.classList.contains('oculto');
+  a.classList.toggle('oculto', abierta); G.pausa = !abierta;
+}
+document.getElementById('b-ayuda').addEventListener('click', abrirAyuda);
+document.getElementById('b-cerrar-ayuda').addEventListener('click', abrirAyuda);
+window.addEventListener('keydown', function (ev) { const a = document.getElementById('ayuda'); if (!a.classList.contains('oculto') && (ev.key === 'Escape')) abrirAyuda(); }, true);
 
 function bucle(ts) {
   const dt = Math.min(.05, (ts - ultimo) / 1000 || 0); ultimo = ts;
-  if (G) { if (!G.fin) actualizar(dt); pintar(); }
+  if (G) { if (!G.fin && !G.pausa) actualizar(dt); pintar(); }
   requestAnimationFrame(bucle);
 }
 requestAnimationFrame(bucle);

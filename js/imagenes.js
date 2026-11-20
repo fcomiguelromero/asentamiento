@@ -14,11 +14,11 @@ const IMG_CONF = {
   'ayuntamiento': { f: 1.04, dy: 6 },
   'bloque-1': { f: 1.0, dy: 2 }, 'bloque-2': { f: 1.0, dy: 2 }, 'bloque-3': { f: 1.0, dy: 2 }, 'bloque-4': { f: 1.0, dy: 2 },
   'fuente': { f: .78, dy: -20 },
-  'monton-chatarra': { f: 1.25, dy: -8 }
+  'monton-chatarra': { f: 1.25, dy: -8 }, 'monton-chatarra-2': { f: 1.25, dy: -8 }, 'plantacion': { f: 1.05, dy: 2 }, 'casa-patriarca-2': { f: 1.02, dy: 6 }, 'casa-patriarca-3': { f: 1.02, dy: 6 }
 };
 ['retrato-chatarrero', 'retrato-echadora', 'retrato-navajero', 'retrato-patriarca', 'retrato-romero', 'cartel-inicio'].forEach(function (k) { IMG_CONF[k] = IMG_CONF[k] || {}; });
 ['taberna-obra', 'chatarreria-obra', 'chabola-carton-obra', 'chabola-uralita-obra', 'chabola-ladrillo-obra', 'obra-solar',
-  'ayuntamiento-danado', 'ayuntamiento-ruina', 'ayuntamiento-ocupado', 'ruinas', 'contenedor'].forEach(function (k) { if (!IMG_CONF[k]) IMG_CONF[k] = { f: 1, dy: 2, opcional: true }; });
+  'ayuntamiento-danado', 'ayuntamiento-ruina', 'ayuntamiento-ocupado', 'ruinas', 'contenedor', 'monton-chatarra-2', 'plantacion', 'casa-patriarca-2', 'casa-patriarca-3'].forEach(function (k) { if (!IMG_CONF[k]) IMG_CONF[k] = { f: 1, dy: 2, opcional: true }; });
 
 const DISPONIBLES = ["ayuntamiento", "bloque-1", "bloque-2", "bloque-3", "bloque-4", "cartel-inicio", "casa-patriarca", "chabola-carton", "chabola-ladrillo01", "chabola-ladrillo02", "chabola-ladrillo03", "chabola-uralita", "chatarreria", "fuente", "monton-chatarra", "retrato-chatarrero", "retrato-echadora", "retrato-navajero", "retrato-patriarca", "retrato-romero", "taberna"];
 Object.keys(IMG_CONF).filter(function (k) { return DISPONIBLES.indexOf(k) >= 0; }).forEach(function (k) {
@@ -31,10 +31,10 @@ Object.keys(IMG_CONF).filter(function (k) { return DISPONIBLES.indexOf(k) >= 0; 
 function claveImagen(e) {
   switch (e.k) {
     case 'chabola': return e.nivel === 2 ? 'chabola-ladrillo0' + (1 + e.id % 3) : e.nivel === 1 ? 'chabola-uralita' : 'chabola-carton';
-    case 'principal': return 'casa-patriarca';
+    case 'principal': return (e.nivel && IMG['casa-patriarca-' + (e.nivel + 1)]) ? 'casa-patriarca-' + (e.nivel + 1) : 'casa-patriarca';
     case 'bloque': return (e.ocupado && IMG['bloque-' + (e.tono + 1) + '-ocupado']) ? 'bloque-' + (e.tono + 1) + '-ocupado' : 'bloque-' + (e.tono + 1);
     case 'plaza': return 'fuente';
-    case 'monton': return 'monton-chatarra';
+    case 'monton': return e.id % 2 ? 'monton-chatarra-2' : 'monton-chatarra';
     case 'ayuntamiento': {
       const f = e.hp / e.hpMax;
       if (e.ocupadoPor0 && IMG['ayuntamiento-ocupado']) return 'ayuntamiento-ocupado';

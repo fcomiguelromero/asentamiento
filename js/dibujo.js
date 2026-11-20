@@ -835,6 +835,15 @@ function dibCasilla(c, tiles, N, x, y) {
     if (r2 > .8) { const a = [p[0] - 10 + r * 12, p[1] - 3]; linea(c, a, [a[0] + 5, a[1] + 2], '#5E6168'); linea(c, [a[0] + 5, a[1] + 2], [a[0] + 7, a[1] + 6], '#5E6168'); linea(c, [a[0] + 5, a[1] + 2], [a[0] + 11, a[1] + 1], '#5E6168'); }
     if (r < .05) { elip(c, p[0], p[1], 7, 3.5, '#5E6168', '#3F4248'); linea(c, [p[0] - 5, p[1]], [p[0] + 5, p[1]], '#3F4248'); }
     if (r2 < .12) elip(c, p[0] + 4, p[1] + 1, 8, 3.5, 'rgba(40,40,46,.2)', false);
+  } else if (tp === 6) {
+    c.lineWidth = 1.4;
+    linea(c, iso(x + .15, y + .3), iso(x + .85, y + .3), '#B79A6A'); linea(c, iso(x + .15, y + .7), iso(x + .85, y + .7), '#B79A6A');
+    if (r > .7) { c.lineWidth = 1; elip(c, p[0] + 5, p[1] + 1, 2.4, 1.3, '#A39B8E', '#7E766A'); }
+  } else if (tp === 4) {
+    c.lineWidth = 1;
+    if (r2 > .6) { linea(c, [p[0] - 10, p[1] - 2], [p[0] - 3, p[1] + 1], '#A8784C'); linea(c, [p[0] + 4, p[1] + 3], [p[0] + 11, p[1] + 1], '#A8784C'); }
+    if (r < .2) { elip(c, p[0] + 6, p[1] - 2, 2, 1.2, '#E8D3A8', false); }
+  } else if (tp === 5) {
   } else {
     c.lineWidth = 1;
     linea(c, iso(x + .5, y), iso(x + .5, y + 1), '#BDB3A3'); linea(c, iso(x, y + .5), iso(x + 1, y + .5), '#BDB3A3');
@@ -993,3 +1002,92 @@ function crearGrano() {
   for (let i = 0; i < 500; i++) { c.fillStyle = 'rgba(255,248,230,' + (.1 + rnd() * .25).toFixed(2) + ')'; c.beginPath(); c.arc(rnd() * 256, rnd() * 256, .3 + rnd() * 1, 0, 6.3); c.fill(); }
   return cv;
 }
+
+/* ---------- v0.8: plantación, segundo montón, pillastres y antidisturbios ---------- */
+DIB.plantacion = function (c, e, t) {
+  const x = e.x, y = e.y;
+  c.lineWidth = 1.5; c.lineJoin = 'round';
+  poli(c, [iso(x + .1, y + .1), iso(x + 1.9, y + .1), iso(x + 1.9, y + 1.9), iso(x + .1, y + 1.9)], '#8E6A3E');
+  c.lineWidth = 1;
+  for (let f = 0; f < 4; f++) {
+    const yy = y + .35 + f * .42;
+    linea(c, iso(x + .2, yy + .12), iso(x + 1.8, yy + .12), '#6E5230');
+    for (let k = 0; k < 5; k++) {
+      const p = iso(x + .32 + k * .34, yy), s = Math.sin(t * 1.4 + k + f) * .8;
+      c.lineWidth = 1.2;
+      circ(c, p[0] - 3, p[1] - 4, 3.4, '#5E7B4A'); circ(c, p[0] + 3, p[1] - 4, 3.4, '#5E7B4A'); circ(c, p[0] + s, p[1] - 8, 3.8, '#6F9058');
+      c.lineWidth = .9;
+      for (let j = -1; j <= 1; j++) linea(c, [p[0] + j * 2 + s, p[1] - 9], [p[0] + j * 3.5 + s, p[1] - 14], '#4F6B3E');
+      circ(c, p[0] + 1 + s, p[1] - 12, 1.3, '#B9A6D6', false); circ(c, p[0] - 2 + s, p[1] - 10, 1.1, '#9B8AC8', false);
+    }
+  }
+  // valla de cañas
+  c.lineWidth = 1.6;
+  const v1 = iso(x + .05, y + 1.95), v2 = iso(x + 1.95, y + 1.95), v3 = iso(x + 1.95, y + .05);
+  for (let k = 0; k <= 8; k++) { const f = k / 8, a = [v1[0] + (v2[0] - v1[0]) * f, v1[1] + (v2[1] - v1[1]) * f], b = [v2[0] + (v3[0] - v2[0]) * f, v2[1] + (v3[1] - v2[1]) * f]; linea(c, a, [a[0], a[1] - 9], '#C9A56E'); linea(c, b, [b[0], b[1] - 9], '#B08A55'); }
+  c.lineWidth = 1.2; linea(c, [v1[0], v1[1] - 6], [v2[0], v2[1] - 6], '#8E6A3E'); linea(c, [v2[0], v2[1] - 6], [v3[0], v3[1] - 6], '#8E6A3E');
+  // espantapájaros
+  const q = iso(x + 1.45, y + .5);
+  c.lineWidth = 2; linea(c, q, [q[0], q[1] - 30], '#7A5230'); linea(c, [q[0] - 9, q[1] - 22], [q[0] + 9, q[1] - 22], '#7A5230');
+  c.lineWidth = 1.3; poli(c, [[q[0] - 5, q[1] - 24], [q[0] + 5, q[1] - 24], [q[0] + 6, q[1] - 12], [q[0] - 6, q[1] - 12]], '#B4432B');
+  circ(c, q[0], q[1] - 29, 4, '#E6CF8E'); elip(c, q[0], q[1] - 33, 7, 2, '#C9A24A'); poli(c, [[q[0] - 4, q[1] - 33], [q[0], q[1] - 39], [q[0] + 4, q[1] - 33]], '#C9A24A');
+  // regadera
+  const r = iso(x + .5, y + 1.7); c.lineWidth = 1.2;
+  poli(c, [[r[0] - 4, r[1] - 7], [r[0] + 4, r[1] - 7], [r[0] + 4, r[1]], [r[0] - 4, r[1]]], '#5E7F99'); linea(c, [r[0] + 4, r[1] - 4], [r[0] + 9, r[1] - 9], '#5E7F99');
+};
+DIB.monton2 = function (c, e) {
+  const p = iso(e.x + .5, e.y + .5), s = .65 + .45 * Math.min(1, e.cant / e.cantMax);
+  c.save(); c.translate(p[0], p[1]); c.scale(s, s);
+  c.lineWidth = 1.6 / s; c.lineJoin = 'round';
+  elip(c, 2, 4, 32, 12, 'rgba(30,18,8,.25)', false);
+  // palés
+  for (let j = 0; j < 3; j++) poli(c, [[-28, 2 - j * 4], [-12, 10 - j * 4], [4, 2 - j * 4], [-12, -6 - j * 4]], j === 2 ? '#C99A5E' : '#A9713F');
+  // coche desguazado (puerta y capó)
+  poli(c, [[-2, 6], [6, -14], [24, -12], [26, 4], [14, 10]], '#4F7FA8');
+  poli(c, [[6, -14], [10, -20], [22, -18], [24, -12]], '#9CCBE0');
+  c.lineWidth = 1 / s; linea(c, [8, -6], [22, -4], '#2E5A80'); c.lineWidth = 1.6 / s;
+  circ(c, 18, 2, 1.6, '#C9CED3');
+  // neumáticos apilados
+  for (let j = 0; j < 3; j++) { elip(c, -6, 4 - j * 5, 9, 4.6, '#26221F'); elip(c, -6, 4 - j * 5, 4, 2, '#6B6259'); }
+  elip(c, 20, 10, 8, 4.2, '#26221F'); elip(c, 20, 10, 3.6, 1.8, '#6B6259');
+  // bidón y somier
+  poli(c, [[-24, -4], [-16, -4], [-16, -16], [-24, -16]], '#B5532A'); elip(c, -20, -16, 4, 1.6, '#8F3F1E');
+  c.lineWidth = 1.2 / s; poli(c, [[-30, -18], [-14, -30], [-6, -26], [-22, -14]], null, '#6E7880');
+  for (let k = 1; k < 4; k++) linea(c, [-30 + k * 4, -18 - k * 3], [-22 + k * 4, -14 - k * 3], '#6E7880');
+  c.restore();
+};
+DIB.pillastre = function (c, u, t) {
+  const g = u.golpeT > 0, v = u.id % 3;
+  const chandal = ['#3E7CA6', '#7B3FA0', '#2F7D4F'][v];
+  const mano = g ? [11, -15] : [5.5, -13];
+  persona(c, {
+    t: t * 1.3 + u.id, anda: u.anda, camisa: chandal, oscuro: '#1E2A44', pant: chandal, pantOsc: '#1E2A44', piel: v === 1 ? '#C98B5E' : '#E2A77A', zapato: '#F4F1EA', brazo: mano,
+    torso: function (c, y) { c.lineWidth = 1.3; linea(c, [-4.8, y + 2], [-4.8, y + 12], '#F4F1EA'); linea(c, [1, y + 1], [1, y + 12], '#F4F1EA'); c.lineWidth = 1.5; },
+    cabeza: function (c, y) {
+      if (v === 0) { c.fillStyle = '#F4F1EA'; c.beginPath(); c.arc(.5, y - 1.6, 5.9, Math.PI, 0); c.closePath(); c.fill(); c.stroke(); elip(c, -5.5, y - 1.8, 3.2, 1.2, '#F4F1EA'); }
+      else { c.fillStyle = v === 1 ? '#1E1612' : '#C9A24A'; c.beginPath(); c.arc(.6, y - 1.2, 6, Math.PI * .85, Math.PI * 1.95); c.closePath(); c.fill(); c.stroke(); }
+    }
+  });
+  const b = u.anda ? Math.abs(Math.sin((t * 1.3 + u.id) * 11)) * 1.5 : 0;
+  if (g) trazo(c, mano[0], mano[1] - b, mano[0] + 4, mano[1] - 3 - b, '#C9A56E', 1.6);
+};
+DIB.antidisturbios = function (c, u, t) {
+  const g = u.golpeT > 0;
+  const mano = g ? [12, -16] : [6, -19];
+  persona(c, {
+    t: t * .85 + u.id, anda: u.anda, camisa: '#2B3440', oscuro: '#1C232C', pant: '#2B3440', pantOsc: '#1C232C', piel: '#E8B48A', zapato: '#111111', cinto: '#111111', brazo: mano, sinBoca: true,
+    torso: function (c, y) { c.lineWidth = 1; poli(c, [[-4.5, y + 1], [4.5, y + 1], [4.5, y + 7], [-4.5, y + 7]], '#3A4654'); c.lineWidth = 1.5; },
+    cabeza: function (c, y) {
+      c.fillStyle = '#1F2833'; c.beginPath(); c.arc(1, y - .5, 7, Math.PI * .9, Math.PI * 2.05); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(160,200,220,.55)'; c.beginPath(); c.rect(1.5, y - 2.5, 6.5, 5.5); c.fill(); c.stroke();
+      c.lineWidth = 1; linea(c, [-5, y + 1], [-5, y + 4], '#111');
+    }
+  });
+  const b = u.anda ? Math.abs(Math.sin((t * .85 + u.id) * 11)) * 1.5 : 0;
+  trazo(c, mano[0], mano[1] - b, mano[0] + (g ? 8 : 3), mano[1] + (g ? 2 : -9) - b, '#1A1A1A', 2);
+  // escudo transparente delante
+  c.lineWidth = 1.6; c.fillStyle = 'rgba(190,220,235,.45)'; c.strokeStyle = TINTA;
+  c.beginPath(); c.roundRect(4, -30 - b, 7, 28, 2); c.fill(); c.stroke();
+  c.lineWidth = 1; linea(c, [5.5, -26 - b], [9.5, -26 - b], 'rgba(255,255,255,.8)');
+  c.fillStyle = '#F4F1EA'; c.fillRect(5.2, -18 - b, 4.6, 2.2);
+};

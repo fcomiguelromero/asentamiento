@@ -80,3 +80,16 @@ button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--tint
   #reloj { display: none; }
   .ayuda { display: none; }
 }
+
+.dif { flex-wrap: wrap; }
+#b-ayuda { font-size: 12px; box-shadow: none; padding: 2px 8px; }
+.ayuda-cartel { max-width: 980px; text-align: left; }
+.ayuda-cartel h2 { font-family: var(--rotulo); font-weight: normal; font-size: 34px; color: var(--rojo); margin: 0; text-align: center; }
+.ayuda-cartel .lema { text-align: center; margin: 4px 0 12px; }
+.ayuda-cartel .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.ayuda-cartel h3 { font-family: var(--rotulo); font-weight: normal; font-size: 20px; color: var(--oliva); margin: 0 0 6px; border-bottom: 2px solid var(--tinta); }
+.ayuda-cartel dl { margin: 0; font-size: 13px; line-height: 1.35; }
+.ayuda-cartel dt { font-weight: bold; margin-top: 6px; }
+.ayuda-cartel dd { margin: 0; color: #4A3A2A; }
+#b-cerrar-ayuda { display: block; margin: 16px auto 0; font-family: var(--rotulo); font-size: 20px; background: var(--oliva); color: var(--papel); }
+@media (max-width: 760px) { #b-ayuda { display: none; } }
